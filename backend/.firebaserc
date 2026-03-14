@@ -1,6 +1,6 @@
 {
   "projects": {
-    "default": // TODO: ADD PROJECT ID
+    "default": "YOUR_FIREBASE_PROJECT_ID"
   },
   "targets": {},
   "etags": {}
