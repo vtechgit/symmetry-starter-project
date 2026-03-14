@@ -1,6 +1,6 @@
 {
   "projects": {
-    "default": "YOUR_FIREBASE_PROJECT_ID"
+    "default": "test-app-5af94"
   },
   "targets": {},
   "etags": {}
