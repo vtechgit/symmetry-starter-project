@@ -10,3 +10,11 @@ abstract class FirestoreArticlesEvent extends Equatable {
 class GetFirestoreArticles extends FirestoreArticlesEvent {
   const GetFirestoreArticles();
 }
+
+class DeleteFirestoreArticle extends FirestoreArticlesEvent {
+  final String firestoreId;
+  const DeleteFirestoreArticle(this.firestoreId);
+
+  @override
+  List<Object?> get props => [firestoreId];
+}

@@ -4,6 +4,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ionicons/ionicons.dart';
+import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_state.dart';
 import '../../../domain/entities/article.dart';
 import '../../bloc/article/upload/upload_article_bloc.dart';
 import '../../bloc/article/upload/upload_article_event.dart';
@@ -18,7 +20,6 @@ class PublishArticlePage extends StatefulWidget {
 
 class _PublishArticlePageState extends State<PublishArticlePage> {
   final _titleController = TextEditingController();
-  final _authorController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _contentController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -29,7 +30,6 @@ class _PublishArticlePageState extends State<PublishArticlePage> {
   @override
   void dispose() {
     _titleController.dispose();
-    _authorController.dispose();
     _descriptionController.dispose();
     _contentController.dispose();
     super.dispose();
@@ -125,22 +125,6 @@ class _PublishArticlePageState extends State<PublishArticlePage> {
               ),
               validator: (v) =>
                   (v == null || v.trim().isEmpty) ? 'Title is required' : null,
-              showBorder: false,
-            ),
-            Divider(color: dividerColor),
-            const SizedBox(height: 4),
-            _buildField(
-              context: context,
-              controller: _authorController,
-              hint: 'Your name...',
-              maxLines: 1,
-              style: TextStyle(
-                color: onSurface,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Author is required' : null,
               showBorder: false,
             ),
             Divider(color: dividerColor),
@@ -334,9 +318,17 @@ class _PublishArticlePageState extends State<PublishArticlePage> {
     final formValid = _formKey.currentState!.validate();
     if (!formValid || _pickedImageBytes == null) return;
 
+    final authState = context.read<AuthBloc>().state;
+    final email = authState is AuthAuthenticated ? authState.user.email ?? '' : '';
+    final author = authState is AuthAuthenticated
+        ? (authState.user.displayName?.isNotEmpty == true
+            ? authState.user.displayName!
+            : email.split('@').first)
+        : 'Anonymous';
+
     final article = ArticleEntity(
       title: _titleController.text.trim(),
-      author: _authorController.text.trim(),
+      author: author,
       description: _descriptionController.text.trim(),
       content: _contentController.text.trim(),
       publishedAt: DateTime.now().toIso8601String().substring(0, 10),

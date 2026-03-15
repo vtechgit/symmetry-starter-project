@@ -1,8 +1,9 @@
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:news_app_clean_architecture/core/constants/constants.dart';
-import 'package:news_app_clean_architecture/features/daily_news/data/data_sources/local/app_database.dart';
+import 'package:news_app_clean_architecture/features/daily_news/data/data_sources/remote/bookmark_service.dart';
 import 'package:news_app_clean_architecture/features/daily_news/data/data_sources/remote/remote_article_data_sources.dart';
 import 'package:news_app_clean_architecture/features/daily_news/data/models/article.dart';
 import 'package:news_app_clean_architecture/core/resources/data_state.dart';
@@ -11,9 +12,9 @@ import 'package:news_app_clean_architecture/features/daily_news/domain/repositor
 
 class ArticleRepositoryImpl implements ArticleRepository {
   final RemoteArticleDataSources _remote;
-  final AppDatabase? _appDatabase;
+  final BookmarkService _bookmarks;
 
-  ArticleRepositoryImpl(this._remote, this._appDatabase);
+  ArticleRepositoryImpl(this._remote, this._bookmarks);
 
   @override
   Future<DataState<List<ArticleModel>>> getNewsArticles() async {
@@ -50,25 +51,31 @@ class ArticleRepositoryImpl implements ArticleRepository {
       final articles = await _remote.firestore.getArticles();
       return DataSuccess(articles);
     } catch (e) {
-      return DataFailed(DioError(
-        error: e.toString(),
-        type: DioErrorType.other,
-        requestOptions: RequestOptions(path: ''),
-      ));
+      return DataFailed(_dioError(e));
     }
   }
 
   @override
   Future<DataState<void>> uploadArticle(ArticleEntity article) async {
     try {
-      await _remote.firestore.uploadArticle(ArticleModel.fromEntity(article));
+      final authorId = FirebaseAuth.instance.currentUser?.uid ?? '';
+      await _remote.firestore.uploadArticle(
+        ArticleModel.fromEntity(article),
+        authorId: authorId,
+      );
       return const DataSuccess(null);
     } catch (e) {
-      return DataFailed(DioError(
-        error: e.toString(),
-        type: DioErrorType.other,
-        requestOptions: RequestOptions(path: ''),
-      ));
+      return DataFailed(_dioError(e));
+    }
+  }
+
+  @override
+  Future<DataState<void>> deleteArticle(String articleId) async {
+    try {
+      await _remote.firestore.deleteArticle(articleId);
+      return const DataSuccess(null);
+    } catch (e) {
+      return DataFailed(_dioError(e));
     }
   }
 
@@ -81,29 +88,22 @@ class ArticleRepositoryImpl implements ArticleRepository {
       final url = await _remote.storage.uploadArticleThumbnail(bytes, fileName);
       return DataSuccess(url);
     } catch (e) {
-      return DataFailed(DioError(
-        error: e.toString(),
-        type: DioErrorType.other,
-        requestOptions: RequestOptions(path: ''),
-      ));
+      return DataFailed(_dioError(e));
     }
   }
 
   @override
-  Future<List<ArticleModel>> getSavedArticles() async {
-    if (_appDatabase == null) return [];
-    return _appDatabase!.articleDAO.getArticles();
-  }
+  Future<List<ArticleEntity>> getSavedArticles() => _bookmarks.getBookmarks();
 
   @override
-  Future<void> saveArticle(ArticleEntity article) {
-    if (_appDatabase == null) return Future.value();
-    return _appDatabase!.articleDAO.insertArticle(ArticleModel.fromEntity(article));
-  }
+  Future<void> saveArticle(ArticleEntity article) => _bookmarks.saveBookmark(article);
 
   @override
-  Future<void> removeArticle(ArticleEntity article) {
-    if (_appDatabase == null) return Future.value();
-    return _appDatabase!.articleDAO.deleteArticle(ArticleModel.fromEntity(article));
-  }
+  Future<void> removeArticle(ArticleEntity article) => _bookmarks.removeBookmark(article);
+
+  DioError _dioError(Object e) => DioError(
+        error: e.toString(),
+        type: DioErrorType.other,
+        requestOptions: RequestOptions(path: ''),
+      );
 }

@@ -12,7 +12,7 @@ class FirestoreArticleService {
         .orderBy('createdAt', descending: true)
         .get();
     return snapshot.docs
-        .map((doc) => ArticleModel.fromFirestore(doc.data()))
+        .map((doc) => ArticleModel.fromFirestore(doc.data(), docId: doc.id))
         .toList();
   }
 
@@ -23,12 +23,16 @@ class FirestoreArticleService {
         .snapshots()
         .map(
           (snapshot) => snapshot.docs
-              .map((doc) => ArticleModel.fromFirestore(doc.data()))
+              .map((doc) => ArticleModel.fromFirestore(doc.data(), docId: doc.id))
               .toList(),
         );
   }
 
-  Future<void> uploadArticle(ArticleModel article) async {
-    await _firestore.collection('articles').add(article.toJson());
+  Future<void> uploadArticle(ArticleModel article, {required String authorId}) async {
+    await _firestore.collection('articles').add(article.toJson(authorId: authorId));
+  }
+
+  Future<void> deleteArticle(String articleId) async {
+    await _firestore.collection('articles').doc(articleId).delete();
   }
 }

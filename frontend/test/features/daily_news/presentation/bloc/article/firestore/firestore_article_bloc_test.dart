@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/delete_article.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/watch_firestore_articles.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/firestore/firestore_article_bloc.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/firestore/firestore_article_event.dart';
@@ -7,9 +8,14 @@ import '../../../../../../helpers/fake_article_repository.dart';
 
 void main() {
   late FirestoreArticlesBloc bloc;
+  late FakeArticleRepository repo;
 
   setUp(() {
-    bloc = FirestoreArticlesBloc(WatchFirestoreArticlesUseCase(FakeArticleRepository()));
+    repo = FakeArticleRepository();
+    bloc = FirestoreArticlesBloc(
+      WatchFirestoreArticlesUseCase(repo),
+      DeleteArticleUseCase(repo),
+    );
   });
 
   tearDown(() {

@@ -9,6 +9,10 @@ class ArticleEntity extends Equatable{
   final String ? urlToImage;
   final String ? publishedAt;
   final String ? content;
+  final String ? firestoreId;
+  final String ? authorId;
+  final int? likeCount;
+  final int? commentCount;
 
   const ArticleEntity({
     this.id,
@@ -19,6 +23,10 @@ class ArticleEntity extends Equatable{
     this.urlToImage,
     this.publishedAt,
     this.content,
+    this.firestoreId,
+    this.authorId,
+    this.likeCount,
+    this.commentCount,
   });
 
   @override
@@ -32,6 +40,10 @@ class ArticleEntity extends Equatable{
       urlToImage,
       publishedAt,
       content,
+      firestoreId,
+      authorId,
+      likeCount,
+      commentCount,
     ];
   }
 }
