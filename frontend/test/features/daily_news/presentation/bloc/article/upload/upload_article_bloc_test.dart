@@ -4,6 +4,7 @@ import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/upload/upload_article_bloc.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/upload/upload_article_event.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/upload/upload_article_state.dart';
+import '../../../../../../helpers/fake_article_repository.dart';
 
 void main() {
   late UploadArticleBloc bloc;
@@ -17,7 +18,7 @@ void main() {
   );
 
   setUp(() {
-    bloc = UploadArticleBloc(UploadArticleUseCase());
+    bloc = UploadArticleBloc(UploadArticleUseCase(FakeArticleRepository()));
   });
 
   tearDown(() {

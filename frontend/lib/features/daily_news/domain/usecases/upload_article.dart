@@ -1,11 +1,15 @@
 import 'package:news_app_clean_architecture/core/resources/data_state.dart';
 import 'package:news_app_clean_architecture/core/usecase/usecase.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/entities/article.dart';
+import 'package:news_app_clean_architecture/features/daily_news/domain/repository/article_repository.dart';
 
 class UploadArticleUseCase implements UseCase<DataState<void>, ArticleEntity> {
+  final ArticleRepository _repository;
+
+  UploadArticleUseCase(this._repository);
+
   @override
-  Future<DataState<void>> call({ArticleEntity? params}) async {
-    // Mock: simulates a successful upload to Firestore
-    return const DataSuccess(null);
+  Future<DataState<void>> call({ArticleEntity? params}) {
+    return _repository.uploadArticle(params!);
   }
 }
