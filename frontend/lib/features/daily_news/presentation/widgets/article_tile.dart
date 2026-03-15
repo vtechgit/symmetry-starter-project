@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:news_app_clean_architecture/core/widgets/app_network_image.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:news_app_clean_architecture/core/utils/auth_guard.dart';
@@ -202,12 +203,11 @@ class ArticleWidget extends StatelessWidget {
       padding: const EdgeInsets.only(top: 10),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: CachedNetworkImage(
-          imageUrl: article!.urlToImage!,
+        child: AppNetworkImage(
+          url: article!.urlToImage!,
           width: double.infinity,
           height: 180,
-          fit: BoxFit.cover,
-          placeholder: (context, url) => Container(
+          placeholder: Container(
             height: 180,
             color: dividerColor,
             child: Center(
@@ -217,7 +217,7 @@ class ArticleWidget extends StatelessWidget {
               ),
             ),
           ),
-          errorWidget: (context, url, error) => Container(
+          errorWidget: Container(
             height: 180,
             color: dividerColor,
             child: Icon(Icons.broken_image_outlined, color: secondaryColor, size: 32),

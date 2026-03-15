@@ -21,16 +21,20 @@ class UploadArticleBloc extends Bloc<UploadArticleEvent, UploadArticleState> {
   ) async {
     emit(const UploadArticleLoading());
 
-    final thumbResult = await _uploadThumbnailUseCase.call(
-      params: ThumbnailParams(
-        bytes: event.imageBytes,
-        fileName: event.imageFileName,
-      ),
-    );
+    String? thumbUrl = event.imageUrl;
 
-    if (thumbResult is DataFailed) {
-      emit(const UploadArticleError('Failed to upload thumbnail'));
-      return;
+    if (thumbUrl == null) {
+      final thumbResult = await _uploadThumbnailUseCase.call(
+        params: ThumbnailParams(
+          bytes: event.imageBytes!,
+          fileName: event.imageFileName!,
+        ),
+      );
+      if (thumbResult is DataFailed) {
+        emit(const UploadArticleError('Failed to upload thumbnail'));
+        return;
+      }
+      thumbUrl = thumbResult.data!;
     }
 
     final article = ArticleEntity(
@@ -39,7 +43,7 @@ class UploadArticleBloc extends Bloc<UploadArticleEvent, UploadArticleState> {
       authorPhotoURL: event.article.authorPhotoURL,
       description: event.article.description,
       content: event.article.content,
-      urlToImage: thumbResult.data!,
+      urlToImage: thumbUrl,
       publishedAt: event.article.publishedAt,
     );
 
