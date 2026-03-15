@@ -2,10 +2,15 @@ import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:news_app_clean_architecture/core/widgets/app_network_image.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ionicons/ionicons.dart';
+import 'package:news_app_clean_architecture/features/ai_article/presentation/bloc/generate_article_bloc.dart';
+import 'package:news_app_clean_architecture/features/ai_article/presentation/bloc/generate_article_state.dart';
+import 'package:news_app_clean_architecture/features/ai_article/presentation/widgets/ai_idea_sheet.dart';
 import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_state.dart';
+import 'package:news_app_clean_architecture/injection_container.dart';
 import '../../../domain/entities/article.dart';
 import '../../bloc/article/upload/upload_article_bloc.dart';
 import '../../bloc/article/upload/upload_article_event.dart';
@@ -26,6 +31,7 @@ class _PublishArticlePageState extends State<PublishArticlePage> {
 
   Uint8List? _pickedImageBytes;
   String? _pickedImageFileName;
+  String? _aiImageUrl;
 
   @override
   void dispose() {
@@ -37,13 +43,34 @@ class _PublishArticlePageState extends State<PublishArticlePage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<UploadArticleBloc, UploadArticleState>(
-      listener: _onStateChanged,
-      child: Scaffold(
-        appBar: _buildAppBar(context),
-        body: _buildBody(context),
+    return BlocProvider<GenerateArticleBloc>(
+      create: (_) => sl<GenerateArticleBloc>(),
+      child: BlocListener<UploadArticleBloc, UploadArticleState>(
+        listener: _onStateChanged,
+        child: Builder(
+          builder: (ctx) => BlocListener<GenerateArticleBloc, GenerateArticleState>(
+            listener: _onAiStateChanged,
+            child: Scaffold(
+              appBar: _buildAppBar(ctx),
+              body: _buildBody(ctx),
+            ),
+          ),
+        ),
       ),
     );
+  }
+
+  void _onAiStateChanged(BuildContext context, GenerateArticleState state) {
+    if (state is GenerateArticleSuccess) {
+      _titleController.text = state.article.title;
+      _descriptionController.text = state.article.description;
+      _contentController.text = state.article.content;
+      setState(() {
+        _pickedImageBytes = null;
+        _pickedImageFileName = null;
+        _aiImageUrl = state.article.thumbnailUrl;
+      });
+    }
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
@@ -112,6 +139,8 @@ class _PublishArticlePageState extends State<PublishArticlePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _buildAiButton(context),
+            const SizedBox(height: 12),
             _buildField(
               context: context,
               controller: _titleController,
@@ -174,23 +203,39 @@ class _PublishArticlePageState extends State<PublishArticlePage> {
     );
   }
 
+  Widget _buildAiButton(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return OutlinedButton.icon(
+      onPressed: () => showAiIdeaSheet(context),
+      icon: Icon(Icons.auto_awesome, size: 16, color: colorScheme.primary),
+      label: Text(
+        'Generate with AI',
+        style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w600),
+      ),
+      style: OutlinedButton.styleFrom(
+        side: BorderSide(color: colorScheme.primary.withValues(alpha: 0.5)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      ),
+    );
+  }
+
   Widget _buildImagePicker(BuildContext context) {
     final dividerColor = Theme.of(context).dividerColor;
     final secondaryColor = Theme.of(context).textTheme.bodyMedium!.color!;
 
-    if (_pickedImageBytes != null) {
+    final hasImage = _pickedImageBytes != null || _aiImageUrl != null;
+    if (hasImage) {
+      final imageWidget = _pickedImageBytes != null
+          ? Image.memory(_pickedImageBytes!, width: double.infinity, height: 180, fit: BoxFit.cover)
+          : AppNetworkImage(url: _aiImageUrl!, width: double.infinity, height: 180);
       return GestureDetector(
         onTap: _pickImage,
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12),
           child: Stack(
             children: [
-              Image.memory(
-                _pickedImageBytes!,
-                width: double.infinity,
-                height: 180,
-                fit: BoxFit.cover,
-              ),
+              imageWidget,
               Positioned(
                 bottom: 8,
                 right: 8,
@@ -222,7 +267,7 @@ class _PublishArticlePageState extends State<PublishArticlePage> {
 
     return FormField<Uint8List>(
       validator: (_) =>
-          _pickedImageBytes == null ? 'Thumbnail is required' : null,
+          (_pickedImageBytes == null && _aiImageUrl == null) ? 'Thumbnail is required' : null,
       builder: (field) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -316,7 +361,7 @@ class _PublishArticlePageState extends State<PublishArticlePage> {
 
   void _onPublish(BuildContext context) {
     final formValid = _formKey.currentState!.validate();
-    if (!formValid || _pickedImageBytes == null) return;
+    if (!formValid || (_pickedImageBytes == null && _aiImageUrl == null)) return;
 
     final authState = context.read<AuthBloc>().state;
     final email = authState is AuthAuthenticated ? authState.user.email ?? '' : '';
@@ -336,7 +381,12 @@ class _PublishArticlePageState extends State<PublishArticlePage> {
     );
 
     context.read<UploadArticleBloc>().add(
-          UploadArticle(article, _pickedImageBytes!, _pickedImageFileName!),
+          UploadArticle(
+            article,
+            imageBytes: _pickedImageBytes,
+            imageFileName: _pickedImageFileName,
+            imageUrl: _aiImageUrl,
+          ),
         );
   }
 

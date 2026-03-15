@@ -1,5 +1,5 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:news_app_clean_architecture/core/widgets/app_network_image.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:share_plus/share_plus.dart';
@@ -129,13 +129,13 @@ class ArticleDetailsView extends StatelessWidget {
         background: Stack(
           fit: StackFit.expand,
           children: [
-            CachedNetworkImage(
-              imageUrl: article?.urlToImage ?? '',
+            AppNetworkImage(
+              url: article?.urlToImage ?? '',
               fit: BoxFit.cover,
-              placeholder: (context, url) => Container(
+              placeholder: Container(
                 color: Theme.of(context).colorScheme.surface,
               ),
-              errorWidget: (context, url, error) => Container(
+              errorWidget: Container(
                 color: Theme.of(context).colorScheme.surface,
                 child: Icon(
                   Icons.broken_image_outlined,

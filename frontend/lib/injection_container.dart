@@ -44,6 +44,14 @@ import 'features/daily_news/domain/usecases/watch_firestore_articles.dart';
 import 'features/daily_news/presentation/bloc/article/firestore/firestore_article_bloc.dart';
 import 'features/daily_news/presentation/bloc/article/remote/remote_article_bloc.dart';
 import 'features/daily_news/presentation/bloc/article/upload/upload_article_bloc.dart';
+import 'features/ai_article/data/data_sources/ai_image_provider.dart';
+import 'features/ai_article/data/data_sources/ai_text_provider.dart';
+import 'features/ai_article/data/data_sources/open_router_service.dart';
+import 'features/ai_article/data/data_sources/lorem_flickr_service.dart';
+import 'features/ai_article/data/repository/ai_article_repository_impl.dart';
+import 'features/ai_article/domain/repository/ai_article_repository.dart';
+import 'features/ai_article/domain/usecases/generate_article_usecase.dart';
+import 'features/ai_article/presentation/bloc/generate_article_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -128,6 +136,16 @@ Future<void> initializeDependencies() async {
     register: sl(),
     updateProfile: sl(),
   ));
+
+  // AI article — providers, repository, usecase, bloc
+  // To swap to Gemini: replace OpenRouterService with GeminiService below
+  sl.registerSingleton<AiTextProvider>(OpenRouterService(sl()));
+  sl.registerSingleton<AiImageProvider>(LoremFlickrService());
+  sl.registerSingleton<AiArticleRepository>(
+    AiArticleRepositoryImpl(sl(), sl()),
+  );
+  sl.registerSingleton<GenerateArticleUseCase>(GenerateArticleUseCase(sl()));
+  sl.registerFactory<GenerateArticleBloc>(() => GenerateArticleBloc(sl()));
 
   // Blocs
   sl.registerFactory<RemoteArticlesBloc>(() => RemoteArticlesBloc(sl()));

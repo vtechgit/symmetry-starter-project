@@ -22,6 +22,7 @@ void main() {
 
   final fakeImageBytes = Uint8List.fromList([0, 1, 2, 3]);
   const fakeImageFileName = 'test_thumbnail.jpg';
+  const fakeImageUrl = 'https://loremflickr.com/640/360/cars?lock=1234';
 
   setUp(() {
     final repo = FakeArticleRepository();
@@ -35,12 +36,12 @@ void main() {
     bloc.close();
   });
 
-  group('UploadArticleBloc', () {
+  group('UploadArticleBloc — bytes path', () {
     test('initial state is UploadArticleInitial', () {
       expect(bloc.state, isA<UploadArticleInitial>());
     });
 
-    test('UploadArticle emits Loading then Done', () async {
+    test('emits Loading then Done', () async {
       expect(
         bloc.stream,
         emitsInOrder([
@@ -49,33 +50,67 @@ void main() {
         ]),
       );
 
-      bloc.add(UploadArticle(testArticle, fakeImageBytes, fakeImageFileName));
+      bloc.add(UploadArticle(
+        testArticle,
+        imageBytes: fakeImageBytes,
+        imageFileName: fakeImageFileName,
+      ));
     });
 
     test('Done state is reached after upload', () async {
-      bloc.add(UploadArticle(testArticle, fakeImageBytes, fakeImageFileName));
+      bloc.add(UploadArticle(
+        testArticle,
+        imageBytes: fakeImageBytes,
+        imageFileName: fakeImageFileName,
+      ));
 
-      final doneState = await bloc.stream
-          .firstWhere((state) => state is UploadArticleDone);
+      final doneState =
+          await bloc.stream.firstWhere((s) => s is UploadArticleDone);
 
       expect(doneState, isA<UploadArticleDone>());
     });
 
-    test('state is never UploadArticleError with valid use case', () async {
-      bloc.add(UploadArticle(testArticle, fakeImageBytes, fakeImageFileName));
+    test('never emits Error with valid use case', () async {
+      bloc.add(UploadArticle(
+        testArticle,
+        imageBytes: fakeImageBytes,
+        imageFileName: fakeImageFileName,
+      ));
 
       final states = await bloc.stream.take(2).toList();
 
       expect(states, everyElement(isNot(isA<UploadArticleError>())));
     });
+  });
 
-    test('thumbnail URL from storage is used in uploaded article', () async {
-      bloc.add(UploadArticle(testArticle, fakeImageBytes, fakeImageFileName));
+  group('UploadArticleBloc — imageUrl path (AI-generated thumbnail)', () {
+    test('emits Loading then Done when imageUrl is provided', () async {
+      expect(
+        bloc.stream,
+        emitsInOrder([
+          isA<UploadArticleLoading>(),
+          isA<UploadArticleDone>(),
+        ]),
+      );
 
-      final doneState = await bloc.stream
-          .firstWhere((state) => state is UploadArticleDone);
+      bloc.add(const UploadArticle(testArticle, imageUrl: fakeImageUrl));
+    });
+
+    test('skips Storage upload and still reaches Done', () async {
+      bloc.add(const UploadArticle(testArticle, imageUrl: fakeImageUrl));
+
+      final doneState =
+          await bloc.stream.firstWhere((s) => s is UploadArticleDone);
 
       expect(doneState, isA<UploadArticleDone>());
+    });
+
+    test('never emits Error with valid use case and imageUrl', () async {
+      bloc.add(const UploadArticle(testArticle, imageUrl: fakeImageUrl));
+
+      final states = await bloc.stream.take(2).toList();
+
+      expect(states, everyElement(isNot(isA<UploadArticleError>())));
     });
   });
 }
