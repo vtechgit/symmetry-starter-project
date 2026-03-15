@@ -329,6 +329,7 @@ class _PublishArticlePageState extends State<PublishArticlePage> {
     final article = ArticleEntity(
       title: _titleController.text.trim(),
       author: author,
+      authorPhotoURL: authState is AuthAuthenticated ? authState.user.photoURL : null,
       description: _descriptionController.text.trim(),
       content: _contentController.text.trim(),
       publishedAt: DateTime.now().toIso8601String().substring(0, 10),

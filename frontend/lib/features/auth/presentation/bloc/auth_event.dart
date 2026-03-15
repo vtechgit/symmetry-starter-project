@@ -34,3 +34,13 @@ class RegisterRequested extends AuthEvent {
   @override
   List<Object?> get props => [email, password];
 }
+
+class ProfileUpdateRequested extends AuthEvent {
+  final String? displayName;
+  final String? photoURL;
+
+  const ProfileUpdateRequested({this.displayName, this.photoURL});
+
+  @override
+  List<Object?> get props => [displayName, photoURL];
+}

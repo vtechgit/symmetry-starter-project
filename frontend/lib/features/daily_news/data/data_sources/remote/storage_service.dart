@@ -17,6 +17,17 @@ class StorageService {
     return ref.getDownloadURL();
   }
 
+  Future<String> uploadProfilePhoto(
+    Uint8List bytes,
+    String uid,
+    String fileName,
+  ) async {
+    final contentType = _contentTypeFromExtension(fileName);
+    final ref = _storage.ref('users/$uid/avatar.jpg');
+    await ref.putData(bytes, SettableMetadata(contentType: contentType));
+    return ref.getDownloadURL();
+  }
+
   String _contentTypeFromExtension(String fileName) {
     final ext = fileName.split('.').last.toLowerCase();
     switch (ext) {

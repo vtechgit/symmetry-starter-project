@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/auth/presentation/pages/profile_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/daily_news/domain/entities/article.dart';
+import '../../features/daily_news/presentation/bloc/article/bookmark/bookmark_bloc.dart';
+import '../../features/daily_news/presentation/bloc/article/bookmark/bookmark_event.dart';
 import '../../features/daily_news/presentation/bloc/article/upload/upload_article_bloc.dart';
 import '../../features/daily_news/presentation/pages/article_detail/article_detail.dart';
 import '../../features/daily_news/presentation/pages/home/daily_news.dart';
@@ -17,7 +20,10 @@ class AppRoutes {
 
       case '/ArticleDetails':
         return _materialRoute(
-          ArticleDetailsView(article: settings.arguments as ArticleEntity),
+          BlocProvider(
+            create: (_) => sl<BookmarkBloc>()..add(const GetBookmarks()),
+            child: ArticleDetailsView(article: settings.arguments as ArticleEntity),
+          ),
         );
 
       case '/PublishArticle':
@@ -33,6 +39,9 @@ class AppRoutes {
 
       case '/Register':
         return _materialRoute(const RegisterPage());
+
+      case '/Profile':
+        return _materialRoute(const ProfilePage());
 
       default:
         return _materialRoute(const DailyNews());

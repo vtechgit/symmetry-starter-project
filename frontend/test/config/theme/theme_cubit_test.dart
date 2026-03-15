@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:news_app_clean_architecture/config/theme/theme_cubit.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   late ThemeCubit cubit;
 
-  setUp(() {
-    cubit = ThemeCubit();
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    cubit = ThemeCubit(prefs);
   });
 
   tearDown(() {

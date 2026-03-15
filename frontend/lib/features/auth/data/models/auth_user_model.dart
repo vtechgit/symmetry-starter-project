@@ -6,13 +6,15 @@ class AuthUserModel extends AuthUserEntity {
     required String uid,
     String? email,
     String? displayName,
-  }) : super(uid: uid, email: email, displayName: displayName);
+    String? photoURL,
+  }) : super(uid: uid, email: email, displayName: displayName, photoURL: photoURL);
 
   factory AuthUserModel.fromFirebaseUser(User user) {
     return AuthUserModel(
       uid: user.uid,
       email: user.email,
       displayName: user.displayName,
+      photoURL: user.photoURL,
     );
   }
 }

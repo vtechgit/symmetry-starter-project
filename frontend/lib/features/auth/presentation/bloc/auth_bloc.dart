@@ -4,6 +4,7 @@ import 'package:news_app_clean_architecture/features/auth/domain/entities/auth_u
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/register_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_in_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_out_usecase.dart';
+import 'package:news_app_clean_architecture/features/auth/domain/usecases/update_profile_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/watch_auth_state_usecase.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
@@ -13,12 +14,14 @@ class AuthUseCases {
   final SignOutUseCase signOut;
   final SignInUseCase signIn;
   final RegisterUseCase register;
+  final UpdateProfileUseCase updateProfile;
 
   const AuthUseCases({
     required this.watchAuthState,
     required this.signOut,
     required this.signIn,
     required this.register,
+    required this.updateProfile,
   });
 }
 
@@ -30,6 +33,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthSignedOut>(_onAuthSignedOut);
     on<SignInRequested>(_onSignInRequested);
     on<RegisterRequested>(_onRegisterRequested);
+    on<ProfileUpdateRequested>(_onProfileUpdateRequested);
   }
 
   Future<void> _onAuthStarted(AuthStarted event, Emitter<AuthState> emit) async {
@@ -66,6 +70,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthAuthenticated(result.data!));
     } else {
       emit(AuthError(result.error?.error?.toString() ?? 'Registration failed'));
+    }
+  }
+
+  Future<void> _onProfileUpdateRequested(
+      ProfileUpdateRequested event, Emitter<AuthState> emit) async {
+    emit(const AuthLoading());
+    final result = await _useCases.updateProfile.call(
+      UpdateProfileParams(displayName: event.displayName, photoURL: event.photoURL),
+    );
+    if (result is DataSuccess<AuthUserEntity>) {
+      emit(AuthAuthenticated(result.data!));
+    } else {
+      emit(AuthError(result.error?.error?.toString() ?? 'Profile update failed'));
     }
   }
 }
