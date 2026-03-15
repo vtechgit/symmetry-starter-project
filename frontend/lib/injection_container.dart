@@ -3,12 +3,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'config/theme/theme_cubit.dart';
 import 'package:news_app_clean_architecture/features/auth/data/data_sources/firebase_auth_service.dart';
 import 'package:news_app_clean_architecture/features/auth/data/repository/auth_repository_impl.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/repository/auth_repository.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/register_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_in_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_out_usecase.dart';
+import 'package:news_app_clean_architecture/features/auth/domain/usecases/update_profile_usecase.dart';
+import 'package:news_app_clean_architecture/features/auth/domain/usecases/upload_profile_photo_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/watch_auth_state_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:news_app_clean_architecture/features/daily_news/data/data_sources/remote/bookmark_service.dart';
@@ -44,6 +48,11 @@ import 'features/daily_news/presentation/bloc/article/upload/upload_article_bloc
 final sl = GetIt.instance;
 
 Future<void> initializeDependencies() async {
+  // SharedPreferences
+  final prefs = await SharedPreferences.getInstance();
+  sl.registerSingleton<SharedPreferences>(prefs);
+  sl.registerSingleton<ThemeCubit>(ThemeCubit(sl()));
+
   // Dio
   sl.registerSingleton<Dio>(Dio());
 
@@ -77,7 +86,7 @@ Future<void> initializeDependencies() async {
     SocialRepositoryImpl(sl()),
   );
   sl.registerSingleton<AuthRepository>(
-    AuthRepositoryImpl(sl()),
+    AuthRepositoryImpl(sl(), sl()),
   );
 
   // Use cases — daily_news
@@ -110,11 +119,14 @@ Future<void> initializeDependencies() async {
   sl.registerSingleton<SignOutUseCase>(SignOutUseCase(sl()));
   sl.registerSingleton<SignInUseCase>(SignInUseCase(sl()));
   sl.registerSingleton<RegisterUseCase>(RegisterUseCase(sl()));
+  sl.registerSingleton<UpdateProfileUseCase>(UpdateProfileUseCase(sl()));
+  sl.registerSingleton<UploadProfilePhotoUseCase>(UploadProfilePhotoUseCase(sl()));
   sl.registerSingleton<AuthUseCases>(AuthUseCases(
     watchAuthState: sl(),
     signOut: sl(),
     signIn: sl(),
     register: sl(),
+    updateProfile: sl(),
   ));
 
   // Blocs

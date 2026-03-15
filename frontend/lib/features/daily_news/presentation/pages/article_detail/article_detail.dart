@@ -10,6 +10,9 @@ import '../../../../../injection_container.dart';
 import '../../../domain/entities/article.dart';
 import '../../../domain/usecases/delete_article.dart';
 import '../../../domain/usecases/save_article.dart';
+import '../../bloc/article/bookmark/bookmark_bloc.dart';
+import '../../bloc/article/bookmark/bookmark_event.dart';
+import '../../bloc/article/bookmark/bookmark_state.dart';
 import '../../bloc/article/social/social_bloc.dart';
 import '../../bloc/article/social/social_event.dart';
 import '../../bloc/article/social/social_state.dart';
@@ -24,18 +27,22 @@ class ArticleDetailsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Widget child = BlocProvider(
+      create: (_) => sl<BookmarkBloc>()..add(const GetBookmarks()),
+      child: Builder(builder: _buildScaffold),
+    );
     if (_isJournalistArticle) {
-      return BlocProvider(
+      child = BlocProvider(
         create: (_) => sl<SocialBloc>()
           ..add(SocialLoadRequested(
             articleId: article!.firestoreId!,
             initialLikeCount: article!.likeCount ?? 0,
             initialCommentCount: article!.commentCount ?? 0,
           )),
-        child: _buildScaffold(context),
+        child: child,
       );
     }
-    return _buildScaffold(context);
+    return child;
   }
 
   Widget _buildScaffold(BuildContext context) {
@@ -96,19 +103,26 @@ class ArticleDetailsView extends StatelessWidget {
             child: const Icon(Ionicons.share_outline, color: Colors.white, size: 20),
           ),
         ),
-        Builder(
-          builder: (context) => GestureDetector(
-            onTap: () => _onBookmarkTapped(context),
-            child: Container(
-              margin: const EdgeInsets.all(8),
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.5),
-                shape: BoxShape.circle,
+        BlocBuilder<BookmarkBloc, BookmarkState>(
+          builder: (context, bookmarkState) {
+            final saved = _isBookmarked(bookmarkState);
+            return GestureDetector(
+              onTap: () => _onBookmarkTapped(context, saved),
+              child: Container(
+                margin: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  saved ? Ionicons.bookmark : Ionicons.bookmark_outline,
+                  color: Colors.white,
+                  size: 20,
+                ),
               ),
-              child: const Icon(Ionicons.bookmark_outline, color: Colors.white, size: 20),
-            ),
-          ),
+            );
+          },
         ),
       ],
       flexibleSpace: FlexibleSpaceBar(
@@ -295,13 +309,25 @@ class ArticleDetailsView extends StatelessWidget {
     Share.share(text);
   }
 
-  void _onBookmarkTapped(BuildContext context) {
+  bool _isBookmarked(BookmarkState state) {
+    if (state is! BookmarkDone || state.articles == null) return false;
+    return state.articles!.any((a) =>
+        (article?.firestoreId != null && a.firestoreId == article?.firestoreId) ||
+        (article?.url != null && a.url == article?.url));
+  }
+
+  void _onBookmarkTapped(BuildContext context, bool isSaved) {
     requireAuth(context, () async {
-      await sl<SaveArticleUseCase>()(params: article!);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Article saved')),
-        );
+      if (isSaved) {
+        context.read<BookmarkBloc>().add(RemoveBookmark(article!));
+      } else {
+        await sl<SaveArticleUseCase>()(params: article!);
+        context.read<BookmarkBloc>().add(const GetBookmarks());
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Article saved')),
+          );
+        }
       }
     });
   }

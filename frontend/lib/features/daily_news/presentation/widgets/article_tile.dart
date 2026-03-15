@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:news_app_clean_architecture/core/utils/auth_guard.dart';
+import 'package:news_app_clean_architecture/core/utils/date_format_helper.dart';
 import 'package:news_app_clean_architecture/injection_container.dart';
 import '../../domain/entities/article.dart';
 import '../bloc/article/social/social_bloc.dart';
@@ -91,10 +92,15 @@ class ArticleWidget extends StatelessWidget {
         CircleAvatar(
           radius: 18,
           backgroundColor: colorScheme.primary,
-          child: Text(
-            _authorInitial,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14),
-          ),
+          backgroundImage: (article?.authorPhotoURL?.isNotEmpty == true)
+              ? CachedNetworkImageProvider(article!.authorPhotoURL!)
+              : null,
+          child: (article?.authorPhotoURL?.isNotEmpty == true)
+              ? null
+              : Text(
+                  _authorInitial,
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14),
+                ),
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -132,7 +138,7 @@ class ArticleWidget extends StatelessWidget {
               ],
               const SizedBox(width: 6),
               Text(
-                '· ${article?.publishedAt ?? ''}',
+                '· ${formatPublishedAt(article?.publishedAt)}',
                 style: TextStyle(color: secondaryColor, fontSize: 13),
                 overflow: TextOverflow.ellipsis,
               ),

@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 class ArticleEntity extends Equatable{
   final int ? id;
   final String ? author;
+  final String ? authorPhotoURL;
   final String ? title;
   final String ? description;
   final String ? url;
@@ -17,6 +18,7 @@ class ArticleEntity extends Equatable{
   const ArticleEntity({
     this.id,
     this.author,
+    this.authorPhotoURL,
     this.title,
     this.description,
     this.url,
@@ -34,6 +36,7 @@ class ArticleEntity extends Equatable{
     return [
       id,
       author,
+      authorPhotoURL,
       title,
       description,
       url,

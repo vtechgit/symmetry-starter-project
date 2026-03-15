@@ -29,4 +29,12 @@ class FirebaseAuthService {
           (user) => user != null ? AuthUserModel.fromFirebaseUser(user) : null,
         );
   }
+
+  Future<AuthUserModel> updateProfile({String? displayName, String? photoURL}) async {
+    final user = _auth.currentUser!;
+    if (displayName != null) await user.updateDisplayName(displayName);
+    if (photoURL != null) await user.updatePhotoURL(photoURL);
+    await user.reload();
+    return AuthUserModel.fromFirebaseUser(_auth.currentUser!);
+  }
 }

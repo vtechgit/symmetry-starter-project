@@ -1,14 +1,18 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:news_app_clean_architecture/core/resources/data_state.dart';
 import 'package:news_app_clean_architecture/features/auth/data/data_sources/firebase_auth_service.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/entities/auth_user_entity.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/repository/auth_repository.dart';
+import 'package:news_app_clean_architecture/features/daily_news/data/data_sources/remote/storage_service.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final FirebaseAuthService _service;
+  final StorageService _storage;
 
-  AuthRepositoryImpl(this._service);
+  AuthRepositoryImpl(this._service, this._storage);
 
   @override
   Future<DataState<AuthUserEntity>> signIn(String email, String password) async {
@@ -43,6 +47,37 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Stream<AuthUserEntity?> watchAuthState() => _service.watchAuthState();
+
+  @override
+  Future<DataState<AuthUserEntity>> updateProfile(
+      String? displayName, String? photoURL) async {
+    try {
+      final user = await _service.updateProfile(
+          displayName: displayName, photoURL: photoURL);
+      return DataSuccess(user);
+    } catch (e) {
+      return DataFailed(DioError(
+        error: 'Failed to update profile.',
+        type: DioErrorType.other,
+        requestOptions: RequestOptions(path: ''),
+      ));
+    }
+  }
+
+  @override
+  Future<DataState<String>> uploadProfilePhoto(
+      Uint8List bytes, String uid, String fileName) async {
+    try {
+      final url = await _storage.uploadProfilePhoto(bytes, uid, fileName);
+      return DataSuccess(url);
+    } catch (e) {
+      return DataFailed(DioError(
+        error: 'Failed to upload photo.',
+        type: DioErrorType.other,
+        requestOptions: RequestOptions(path: ''),
+      ));
+    }
+  }
 
   String _friendlyMessage(String code) {
     switch (code) {

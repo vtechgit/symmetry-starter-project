@@ -8,10 +8,10 @@ import 'package:news_app_clean_architecture/features/daily_news/presentation/blo
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/firestore/firestore_article_state.dart';
 import 'package:news_app_clean_architecture/core/utils/auth_guard.dart';
 import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_event.dart';
 import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_state.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/bookmark/bookmark_bloc.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/bookmark/bookmark_event.dart';
+import 'package:news_app_clean_architecture/core/widgets/max_width_container.dart';
 import 'package:news_app_clean_architecture/injection_container.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/pages/saved_article/saved_article.dart';
 import 'firestore_feed_page.dart';
@@ -47,13 +47,15 @@ class _DailyNewsState extends State<DailyNews> {
       child: Builder(
         builder: (innerCtx) => Scaffold(
           appBar: _buildAppBar(context),
-          body: IndexedStack(
-            index: _selectedIndex,
-            children: const [
-              NewsFeedPage(),
-              FirestoreFeedPage(),
-              SavedArticlesPage(),
-            ],
+          body: MaxWidthContainer(
+            child: IndexedStack(
+              index: _selectedIndex,
+              children: const [
+                NewsFeedPage(),
+                FirestoreFeedPage(),
+                SavedArticlesPage(),
+              ],
+            ),
           ),
           bottomNavigationBar: _buildBottomNav(innerCtx),
           floatingActionButton: _selectedIndex < 2 ? _buildFab() : null,
@@ -94,7 +96,7 @@ class _DailyNewsState extends State<DailyNews> {
               ),
               onPressed: () {
                 if (isLoggedIn) {
-                  context.read<AuthBloc>().add(const AuthSignedOut());
+                  Navigator.pushNamed(context, '/Profile');
                 } else {
                   Navigator.pushNamed(context, '/Login');
                 }

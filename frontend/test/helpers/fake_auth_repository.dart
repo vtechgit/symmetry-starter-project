@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:news_app_clean_architecture/core/resources/data_state.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/entities/auth_user_entity.dart';
@@ -41,4 +43,21 @@ class FakeAuthRepository implements AuthRepository {
 
   @override
   Stream<AuthUserEntity?> watchAuthState() => Stream.value(null);
+
+  @override
+  Future<DataState<AuthUserEntity>> updateProfile(
+      String? displayName, String? photoURL) async {
+    return DataSuccess(AuthUserEntity(
+      uid: _fakeUser.uid,
+      email: _fakeUser.email,
+      displayName: displayName ?? _fakeUser.displayName,
+      photoURL: photoURL ?? _fakeUser.photoURL,
+    ));
+  }
+
+  @override
+  Future<DataState<String>> uploadProfilePhoto(
+      Uint8List bytes, String uid, String fileName) async {
+    return const DataSuccess('https://fake-photo-url.example.com/avatar.jpg');
+  }
 }

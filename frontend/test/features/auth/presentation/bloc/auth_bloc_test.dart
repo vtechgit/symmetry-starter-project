@@ -6,6 +6,7 @@ import '../../../../helpers/fake_auth_repository.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_in_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/register_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_out_usecase.dart';
+import 'package:news_app_clean_architecture/features/auth/domain/usecases/update_profile_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/watch_auth_state_usecase.dart';
 
 AuthBloc _makeBloc(FakeAuthRepository repo) {
@@ -14,6 +15,7 @@ AuthBloc _makeBloc(FakeAuthRepository repo) {
     signOut: SignOutUseCase(repo),
     signIn: SignInUseCase(repo),
     register: RegisterUseCase(repo),
+    updateProfile: UpdateProfileUseCase(repo),
   ));
 }
 

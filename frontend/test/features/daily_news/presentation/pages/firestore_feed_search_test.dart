@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/entities/article.dart';
-import 'package:news_app_clean_architecture/features/daily_news/presentation/pages/home/firestore_feed_page.dart';
+import 'package:news_app_clean_architecture/core/utils/article_filter.dart';
 
 const _articles = [
   ArticleEntity(

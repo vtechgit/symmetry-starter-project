@@ -36,6 +36,7 @@ class UploadArticleBloc extends Bloc<UploadArticleEvent, UploadArticleState> {
     final article = ArticleEntity(
       title: event.article.title,
       author: event.article.author,
+      authorPhotoURL: event.article.authorPhotoURL,
       description: event.article.description,
       content: event.article.content,
       urlToImage: thumbResult.data!,

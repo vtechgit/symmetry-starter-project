@@ -8,6 +8,7 @@ class ArticleModel extends ArticleEntity {
   const ArticleModel({
     int? id,
     String? author,
+    String? authorPhotoURL,
     String? title,
     String? description,
     String? url,
@@ -21,6 +22,7 @@ class ArticleModel extends ArticleEntity {
   }) : super(
           id: id,
           author: author,
+          authorPhotoURL: authorPhotoURL,
           title: title,
           description: description,
           url: url,
@@ -51,6 +53,7 @@ class ArticleModel extends ArticleEntity {
     return ArticleModel(
       id: entity.id,
       author: entity.author,
+      authorPhotoURL: entity.authorPhotoURL,
       title: entity.title,
       description: entity.description,
       url: entity.url,
@@ -75,6 +78,7 @@ class ArticleModel extends ArticleEntity {
     return ArticleModel(
       firestoreId: docId,
       author: map['author'] ?? '',
+      authorPhotoURL: map['authorPhotoURL'] as String?,
       authorId: map['authorId'] ?? '',
       title: map['title'] ?? '',
       description: map['description'] ?? '',
@@ -93,6 +97,7 @@ class ArticleModel extends ArticleEntity {
     return {
       'author': author ?? '',
       'authorId': authorId ?? this.authorId ?? '',
+      'authorPhotoURL': authorPhotoURL,
       'title': title ?? '',
       'description': description ?? '',
       'content': content ?? '',
