@@ -43,6 +43,28 @@ firebase deploy
 This will deploy all the rules you write in `firestore.rules` to your Firebase Firestore project.
 Be careful becasuse it will overwrite the existing firestore.rules file of your project.
 
+### 6. Apply Storage CORS configuration
+
+Firebase Storage blocks image requests from the browser by default. You must apply the CORS policy once per Firebase project so that the Flutter Web app can load article thumbnails.
+
+First, install the Google Cloud SDK if you don't have it (includes `gsutil`):
+- [Download Google Cloud SDK](https://cloud.google.com/sdk/docs/install)
+
+Then authenticate and apply the config:
+```
+gcloud auth login
+gsutil cors set storage.cors.json gs://<your-project-id>.firebasestorage.app
+```
+
+Replace `<your-project-id>` with your Firebase project ID (same as in `.firebaserc`).
+
+To verify it was applied:
+```
+gsutil cors get gs://<your-project-id>.firebasestorage.app
+```
+
+> This step is required only once per Firebase project. The `storage.cors.json` file in this folder contains the policy.
+
 ## Running the project in a local emulator
 To run the application locally, use the following command:
 

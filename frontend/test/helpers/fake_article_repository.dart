@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:news_app_clean_architecture/core/resources/data_state.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/entities/article.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/repository/article_repository.dart';
@@ -38,6 +40,13 @@ class FakeArticleRepository implements ArticleRepository {
   @override
   Stream<List<ArticleEntity>> watchFirestoreArticles() =>
       Stream.value(List.unmodifiable(_firestoreArticles));
+
+  @override
+  Future<DataState<String>> uploadThumbnail(
+    Uint8List bytes,
+    String fileName,
+  ) async =>
+      const DataSuccess('https://example.com/fake-thumbnail.jpg');
 
   @override
   Future<DataState<List<ArticleEntity>>> getNewsArticles() async =>

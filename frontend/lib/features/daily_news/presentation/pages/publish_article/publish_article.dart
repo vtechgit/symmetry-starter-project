@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ionicons/ionicons.dart';
@@ -15,15 +18,20 @@ class PublishArticlePage extends StatefulWidget {
 
 class _PublishArticlePageState extends State<PublishArticlePage> {
   final _titleController = TextEditingController();
+  final _authorController = TextEditingController();
+  final _descriptionController = TextEditingController();
   final _contentController = TextEditingController();
-  final _imageUrlController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+
+  Uint8List? _pickedImageBytes;
+  String? _pickedImageFileName;
 
   @override
   void dispose() {
     _titleController.dispose();
+    _authorController.dispose();
+    _descriptionController.dispose();
     _contentController.dispose();
-    _imageUrlController.dispose();
     super.dispose();
   }
 
@@ -67,7 +75,8 @@ class _PublishArticlePageState extends State<PublishArticlePage> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 ),
                 child: isLoading
                     ? const SizedBox(
@@ -78,7 +87,8 @@ class _PublishArticlePageState extends State<PublishArticlePage> {
                           strokeWidth: 2,
                         ),
                       )
-                    : const Text('Publish', style: TextStyle(fontWeight: FontWeight.w700)),
+                    : const Text('Publish',
+                        style: TextStyle(fontWeight: FontWeight.w700)),
               ),
             );
           },
@@ -118,6 +128,39 @@ class _PublishArticlePageState extends State<PublishArticlePage> {
               showBorder: false,
             ),
             Divider(color: dividerColor),
+            const SizedBox(height: 4),
+            _buildField(
+              context: context,
+              controller: _authorController,
+              hint: 'Your name...',
+              maxLines: 1,
+              style: TextStyle(
+                color: onSurface,
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Author is required' : null,
+              showBorder: false,
+            ),
+            Divider(color: dividerColor),
+            const SizedBox(height: 4),
+            _buildField(
+              context: context,
+              controller: _descriptionController,
+              hint: 'Short summary of your article...',
+              maxLines: 2,
+              style: TextStyle(
+                color: secondaryColor,
+                fontSize: 15,
+                height: 1.5,
+              ),
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? 'Description is required'
+                  : null,
+              showBorder: false,
+            ),
+            Divider(color: dividerColor),
             const SizedBox(height: 8),
             _buildField(
               context: context,
@@ -132,7 +175,7 @@ class _PublishArticlePageState extends State<PublishArticlePage> {
             Divider(color: dividerColor),
             const SizedBox(height: 16),
             Text(
-              'Thumbnail URL *',
+              'Thumbnail *',
               style: TextStyle(
                 color: secondaryColor,
                 fontSize: 13,
@@ -140,20 +183,124 @@ class _PublishArticlePageState extends State<PublishArticlePage> {
               ),
             ),
             const SizedBox(height: 8),
-            _buildField(
-              context: context,
-              controller: _imageUrlController,
-              hint: 'https://example.com/image.jpg',
-              maxLines: 1,
-              style: TextStyle(color: onSurface, fontSize: 14),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Thumbnail URL is required' : null,
-              showBorder: true,
-            ),
+            _buildImagePicker(context),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildImagePicker(BuildContext context) {
+    final dividerColor = Theme.of(context).dividerColor;
+    final secondaryColor = Theme.of(context).textTheme.bodyMedium!.color!;
+
+    if (_pickedImageBytes != null) {
+      return GestureDetector(
+        onTap: _pickImage,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Stack(
+            children: [
+              Image.memory(
+                _pickedImageBytes!,
+                width: double.infinity,
+                height: 180,
+                fit: BoxFit.cover,
+              ),
+              Positioned(
+                bottom: 8,
+                right: 8,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Ionicons.image_outline,
+                          color: Colors.white, size: 14),
+                      SizedBox(width: 4),
+                      Text('Change',
+                          style:
+                              TextStyle(color: Colors.white, fontSize: 12)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return FormField<Uint8List>(
+      validator: (_) =>
+          _pickedImageBytes == null ? 'Thumbnail is required' : null,
+      builder: (field) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GestureDetector(
+            onTap: _pickImage,
+            child: Container(
+              width: double.infinity,
+              height: 140,
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: field.hasError ? Colors.red : dividerColor,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Ionicons.image_outline,
+                      color: secondaryColor, size: 32),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Tap to select thumbnail',
+                    style: TextStyle(color: secondaryColor, fontSize: 14),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'JPG, PNG, WebP — max 5 MB',
+                    style: TextStyle(color: secondaryColor, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (field.hasError)
+            Padding(
+              padding: const EdgeInsets.only(top: 6, left: 4),
+              child: Text(
+                field.errorText!,
+                style: TextStyle(color: Colors.red.shade700, fontSize: 12),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickImage() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final file = result.files.first;
+    if (file.bytes == null) return;
+
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final safeName = file.name.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+
+    setState(() {
+      _pickedImageBytes = file.bytes;
+      _pickedImageFileName = '${timestamp}_$safeName';
+    });
   }
 
   Widget _buildField({
@@ -184,18 +331,20 @@ class _PublishArticlePageState extends State<PublishArticlePage> {
   }
 
   void _onPublish(BuildContext context) {
-    if (!_formKey.currentState!.validate()) return;
+    final formValid = _formKey.currentState!.validate();
+    if (!formValid || _pickedImageBytes == null) return;
 
     final article = ArticleEntity(
       title: _titleController.text.trim(),
+      author: _authorController.text.trim(),
+      description: _descriptionController.text.trim(),
       content: _contentController.text.trim(),
-      description: _titleController.text.trim(),
-      author: 'Journalist',
-      urlToImage: _imageUrlController.text.trim(),
       publishedAt: DateTime.now().toIso8601String().substring(0, 10),
     );
 
-    context.read<UploadArticleBloc>().add(UploadArticle(article));
+    context.read<UploadArticleBloc>().add(
+          UploadArticle(article, _pickedImageBytes!, _pickedImageFileName!),
+        );
   }
 
   void _onStateChanged(BuildContext context, UploadArticleState state) {
