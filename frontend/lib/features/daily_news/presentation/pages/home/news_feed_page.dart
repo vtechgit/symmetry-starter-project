@@ -30,12 +30,18 @@ class NewsFeedPage extends StatelessWidget {
   }
 
   Widget _buildFeed(BuildContext context, List<ArticleEntity> articles) {
-    return ListView.builder(
-      itemCount: articles.length,
-      itemBuilder: (context, index) => ArticleWidget(
-        article: articles[index],
-        onArticlePressed: (article) =>
-            Navigator.pushNamed(context, '/ArticleDetails', arguments: article),
+    return RefreshIndicator(
+      onRefresh: () async {
+        context.read<RemoteArticlesBloc>().add(const GetArticles());
+        await Future.delayed(const Duration(milliseconds: 800));
+      },
+      child: ListView.builder(
+        itemCount: articles.length,
+        itemBuilder: (context, index) => ArticleWidget(
+          article: articles[index],
+          onArticlePressed: (article) =>
+              Navigator.pushNamed(context, '/ArticleDetails', arguments: article),
+        ),
       ),
     );
   }
