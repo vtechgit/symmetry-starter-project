@@ -132,7 +132,7 @@ class _PublishArticlePageState extends State<PublishArticlePage> {
             Divider(color: dividerColor),
             const SizedBox(height: 16),
             Text(
-              'Thumbnail URL',
+              'Thumbnail URL *',
               style: TextStyle(
                 color: secondaryColor,
                 fontSize: 13,
@@ -146,6 +146,8 @@ class _PublishArticlePageState extends State<PublishArticlePage> {
               hint: 'https://example.com/image.jpg',
               maxLines: 1,
               style: TextStyle(color: onSurface, fontSize: 14),
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Thumbnail URL is required' : null,
               showBorder: true,
             ),
           ],
@@ -189,9 +191,7 @@ class _PublishArticlePageState extends State<PublishArticlePage> {
       content: _contentController.text.trim(),
       description: _titleController.text.trim(),
       author: 'Journalist',
-      urlToImage: _imageUrlController.text.trim().isNotEmpty
-          ? _imageUrlController.text.trim()
-          : null,
+      urlToImage: _imageUrlController.text.trim(),
       publishedAt: DateTime.now().toIso8601String().substring(0, 10),
     );
 

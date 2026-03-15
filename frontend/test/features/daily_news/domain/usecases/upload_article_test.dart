@@ -2,9 +2,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:news_app_clean_architecture/core/resources/data_state.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/entities/article.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/upload_article.dart';
+import '../../../../helpers/fake_article_repository.dart';
 
 void main() {
   late UploadArticleUseCase useCase;
+  late FakeArticleRepository repository;
 
   const testArticle = ArticleEntity(
     author: 'Test Author',
@@ -16,7 +18,8 @@ void main() {
   );
 
   setUp(() {
-    useCase = UploadArticleUseCase();
+    repository = FakeArticleRepository();
+    useCase = UploadArticleUseCase(repository);
   });
 
   group('UploadArticleUseCase', () {
@@ -32,10 +35,14 @@ void main() {
       expect(result, isNot(isA<DataFailed<void>>()));
     });
 
-    test('should complete without error when params are null', () async {
-      final result = await useCase.call();
+    test('uploaded article is persisted in the repository', () async {
+      await useCase.call(params: testArticle);
 
-      expect(result, isA<DataSuccess<void>>());
+      final articles = await repository.getFirestoreArticles();
+      expect(
+        articles.data!.any((a) => a.title == testArticle.title),
+        isTrue,
+      );
     });
   });
 }
