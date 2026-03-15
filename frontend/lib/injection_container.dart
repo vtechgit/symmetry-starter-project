@@ -12,7 +12,9 @@ import 'features/daily_news/domain/usecases/get_saved_article.dart';
 import 'features/daily_news/domain/usecases/remove_article.dart';
 import 'features/daily_news/domain/usecases/save_article.dart';
 import 'features/daily_news/domain/usecases/upload_article.dart';
+import 'features/daily_news/presentation/bloc/article/firestore/firestore_article_bloc.dart';
 import 'features/daily_news/presentation/bloc/article/local/local_article_bloc.dart';
+import 'features/daily_news/presentation/bloc/article/upload/upload_article_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -56,11 +58,19 @@ Future<void> initializeDependencies() async {
 
   //Blocs
   sl.registerFactory<RemoteArticlesBloc>(
-    ()=> RemoteArticlesBloc(sl())
+    () => RemoteArticlesBloc(sl())
   );
 
   sl.registerFactory<LocalArticleBloc>(
-    ()=> LocalArticleBloc(sl(),sl(),sl())
+    () => LocalArticleBloc(sl(), sl(), sl())
+  );
+
+  sl.registerFactory<FirestoreArticlesBloc>(
+    () => FirestoreArticlesBloc(sl())
+  );
+
+  sl.registerFactory<UploadArticleBloc>(
+    () => UploadArticleBloc(sl())
   );
 
 
