@@ -4,30 +4,52 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     match /articles/{articleId} {
-
-      // Anyone can read articles — this is a public news feed
       allow read: if true;
 
-      // Journalists can create an article only if it passes schema validation
-      allow create: if isValidArticle(request.resource.data);
+      allow create: if request.auth != null
+          && request.resource.data.authorId == request.auth.uid
+          && isValidArticle(request.resource.data);
 
-      // Updates must keep all required fields valid
-      allow update: if isValidArticle(request.resource.data);
+      allow update: if request.auth != null
+          && (
+            resource.data.get('authorId', null) == request.auth.uid
+            || request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['likeCount', 'commentCount'])
+          );
 
-      // Allow deletion without restrictions for now
-      allow delete: if true;
+      allow delete: if request.auth != null
+          && resource.data.get('authorId', null) == request.auth.uid;
+
+      match /likes/{uid} {
+        allow read: if true;
+        allow write: if request.auth != null && request.auth.uid == uid;
+      }
+
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if request.auth != null
+            && request.resource.data.authorId == request.auth.uid
+            && request.resource.data.text is string
+            && request.resource.data.text.size() > 0;
+        allow delete: if request.auth != null
+            && resource.data.authorId == request.auth.uid;
+        allow update: if false;
+      }
     }
 
-    // Validates that a document has all required fields with the correct types.
-    // This enforces the schema defined in backend/docs/DB_SCHEMA.md.
-    function isValidArticle(article) {
-      return article.title is string        && article.title.size() > 0
-          && article.author is string       && article.author.size() > 0
-          && article.description is string  && article.description.size() > 0
-          && article.content is string      && article.content.size() > 0
-          && article.thumbnailURL is string && article.thumbnailURL.size() > 0
-          && article.publishedAt is timestamp
-          && article.createdAt is timestamp;
+    match /users/{uid}/bookmarks/{articleId} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    function isValidArticle(d) {
+      return d.title is string && d.title.size() > 0
+          && d.author is string && d.author.size() > 0
+          && d.description is string && d.description.size() > 0
+          && d.content is string && d.content.size() > 0
+          && d.thumbnailURL is string && d.thumbnailURL.size() > 0
+          && d.authorId is string && d.authorId.size() > 0
+          && d.publishedAt is timestamp
+          && d.createdAt is timestamp;
     }
   }
 }

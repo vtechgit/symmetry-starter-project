@@ -15,7 +15,10 @@ abstract class ArticleRepository {
   // Storage methods
   Future<DataState<String>> uploadThumbnail(Uint8List bytes, String fileName);
 
-  // Local database methods
+  // Firestore delete
+  Future<DataState<void>> deleteArticle(String articleId);
+
+  // Bookmark methods (Firestore, user-scoped)
   Future<List<ArticleEntity>> getSavedArticles();
   Future<void> saveArticle(ArticleEntity article);
   Future<void> removeArticle(ArticleEntity article);

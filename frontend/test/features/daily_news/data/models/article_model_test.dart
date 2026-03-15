@@ -15,7 +15,7 @@ void main() {
 
   group('ArticleModel.fromFirestore', () {
     test('maps all fields correctly from a Firestore document', () {
-      final model = ArticleModel.fromFirestore(firestoreMap);
+      final model = ArticleModel.fromFirestore(firestoreMap, docId: 'test-doc-id');
 
       expect(model.author, 'Jane Doe');
       expect(model.title, 'Test Article');
@@ -27,7 +27,7 @@ void main() {
     });
 
     test('defaults missing fields to empty string instead of null', () {
-      final model = ArticleModel.fromFirestore(const {});
+      final model = ArticleModel.fromFirestore(const {}, docId: 'test-doc-id');
 
       expect(model.author, '');
       expect(model.title, '');
@@ -35,7 +35,7 @@ void main() {
     });
 
     test('returns an ArticleEntity subtype', () {
-      final model = ArticleModel.fromFirestore(firestoreMap);
+      final model = ArticleModel.fromFirestore(firestoreMap, docId: 'test-doc-id');
 
       expect(model, isA<ArticleEntity>());
     });
@@ -43,7 +43,7 @@ void main() {
 
   group('ArticleModel.toJson', () {
     test('uses thumbnailURL as the Firestore field name for the image', () {
-      final model = ArticleModel.fromFirestore(firestoreMap);
+      final model = ArticleModel.fromFirestore(firestoreMap, docId: 'test-doc-id');
       final json = model.toJson();
 
       expect(json.containsKey('thumbnailURL'), isTrue);
@@ -52,7 +52,7 @@ void main() {
     });
 
     test('serializes text fields correctly', () {
-      final model = ArticleModel.fromFirestore(firestoreMap);
+      final model = ArticleModel.fromFirestore(firestoreMap, docId: 'test-doc-id');
       final json = model.toJson();
 
       expect(json['author'], 'Jane Doe');
@@ -62,7 +62,7 @@ void main() {
     });
 
     test('includes createdAt and updatedAt fields', () {
-      final model = ArticleModel.fromFirestore(firestoreMap);
+      final model = ArticleModel.fromFirestore(firestoreMap, docId: 'test-doc-id');
       final json = model.toJson();
 
       expect(json.containsKey('createdAt'), isTrue);

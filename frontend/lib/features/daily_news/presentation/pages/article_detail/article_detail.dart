@@ -3,33 +3,58 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:news_app_clean_architecture/core/utils/auth_guard.dart';
+import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_state.dart';
 import '../../../../../injection_container.dart';
 import '../../../domain/entities/article.dart';
-import '../../bloc/article/local/local_article_bloc.dart';
-import '../../bloc/article/local/local_article_event.dart';
+import '../../../domain/usecases/delete_article.dart';
+import '../../../domain/usecases/save_article.dart';
+import '../../bloc/article/social/social_bloc.dart';
+import '../../bloc/article/social/social_event.dart';
+import '../../bloc/article/social/social_state.dart';
+import '../../widgets/comments_bottom_sheet.dart';
 
 class ArticleDetailsView extends StatelessWidget {
   final ArticleEntity? article;
 
   const ArticleDetailsView({Key? key, this.article}) : super(key: key);
 
+  bool get _isJournalistArticle => article?.firestoreId != null;
+
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => sl<LocalArticleBloc>(),
-      child: Scaffold(
-        body: CustomScrollView(
-          slivers: [
-            _buildSliverAppBar(context),
-            SliverToBoxAdapter(child: _buildContent(context)),
-          ],
-        ),
+    if (_isJournalistArticle) {
+      return BlocProvider(
+        create: (_) => sl<SocialBloc>()
+          ..add(SocialLoadRequested(
+            articleId: article!.firestoreId!,
+            initialLikeCount: article!.likeCount ?? 0,
+            initialCommentCount: article!.commentCount ?? 0,
+          )),
+        child: _buildScaffold(context),
+      );
+    }
+    return _buildScaffold(context);
+  }
+
+  Widget _buildScaffold(BuildContext context) {
+    return Scaffold(
+      body: CustomScrollView(
+        slivers: [
+          _buildSliverAppBar(context),
+          SliverToBoxAdapter(child: _buildContent(context)),
+        ],
       ),
     );
   }
 
   Widget _buildSliverAppBar(BuildContext context) {
     final scaffoldColor = Theme.of(context).scaffoldBackgroundColor;
+    final authState = context.watch<AuthBloc>().state;
+    final currentUid = authState is AuthAuthenticated ? authState.user.uid : null;
+    final isOwner = currentUid != null && article?.authorId == currentUid;
+
     return SliverAppBar(
       expandedHeight: 280,
       pinned: true,
@@ -46,6 +71,19 @@ class ArticleDetailsView extends StatelessWidget {
         ),
       ),
       actions: [
+        if (isOwner && _isJournalistArticle)
+          GestureDetector(
+            onTap: () => _onUnpublish(context),
+            child: Container(
+              margin: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.5),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.delete_outline, color: Colors.white, size: 20),
+            ),
+          ),
         GestureDetector(
           onTap: _onShareTapped,
           child: Container(
@@ -121,7 +159,58 @@ class ArticleDetailsView extends StatelessWidget {
           Divider(color: Theme.of(context).dividerColor, height: 1),
           const SizedBox(height: 20),
           _buildBody(context),
+          if (_isJournalistArticle) ...[
+            const SizedBox(height: 24),
+            _buildSocialBar(context),
+          ],
           const SizedBox(height: 40),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSocialBar(BuildContext context) {
+    return BlocBuilder<SocialBloc, SocialState>(
+      builder: (context, state) {
+        final secondaryColor = Theme.of(context).textTheme.bodyMedium!.color!;
+        return Row(
+          children: [
+            _socialButton(
+              icon: Icons.chat_bubble_outline,
+              count: state.commentCount,
+              color: secondaryColor,
+              onTap: () => requireAuth(context, () {
+                showCommentsBottomSheet(context, article!.firestoreId!);
+              }),
+            ),
+            const SizedBox(width: 24),
+            _socialButton(
+              icon: state.isLiked ? Icons.favorite : Icons.favorite_border,
+              count: state.likeCount,
+              color: state.isLiked ? Colors.red : secondaryColor,
+              onTap: () => requireAuth(context, () {
+                context.read<SocialBloc>().add(LikeToggled(article!.firestoreId!));
+              }),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _socialButton({
+    required IconData icon,
+    required int count,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: color),
+          const SizedBox(width: 4),
+          Text('$count', style: TextStyle(color: color, fontSize: 13)),
         ],
       ),
     );
@@ -207,9 +296,37 @@ class ArticleDetailsView extends StatelessWidget {
   }
 
   void _onBookmarkTapped(BuildContext context) {
-    context.read<LocalArticleBloc>().add(SaveArticle(article!));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Article saved')),
+    requireAuth(context, () async {
+      await sl<SaveArticleUseCase>()(params: article!);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Article saved')),
+        );
+      }
+    });
+  }
+
+  void _onUnpublish(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Unpublish article?'),
+        content: const Text('This will permanently remove your article.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              await sl<DeleteArticleUseCase>().call(params: article!.firestoreId!);
+              if (context.mounted) Navigator.pop(context);
+            },
+            child: const Text('Unpublish', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -1,33 +1,73 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ionicons/ionicons.dart';
+import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_state.dart';
 import '../../../domain/entities/article.dart';
-import '../../bloc/article/local/local_article_bloc.dart';
-import '../../bloc/article/local/local_article_event.dart';
-import '../../bloc/article/local/local_article_state.dart';
+import '../../bloc/article/bookmark/bookmark_bloc.dart';
+import '../../bloc/article/bookmark/bookmark_event.dart';
+import '../../bloc/article/bookmark/bookmark_state.dart';
 import '../../widgets/article_tile.dart';
 
-// Embedded tab widget — BlocProvider is supplied by the parent shell
 class SavedArticlesPage extends StatelessWidget {
   const SavedArticlesPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<LocalArticleBloc, LocalArticlesState>(
-      builder: (context, state) {
-        if (state is LocalArticlesLoading) {
-          return Center(
-            child: CircularProgressIndicator(
-              color: Theme.of(context).colorScheme.primary,
-              strokeWidth: 2,
-            ),
-          );
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, authState) {
+        if (authState is! AuthAuthenticated) {
+          return _buildSignInPrompt(context);
         }
-        if (state is LocalArticlesDone) {
-          return _buildArticlesList(context, state.articles!);
-        }
-        return const SizedBox();
+        return BlocBuilder<BookmarkBloc, BookmarkState>(
+          builder: (context, state) {
+            if (state is BookmarkLoading) {
+              return Center(
+                child: CircularProgressIndicator(
+                  color: Theme.of(context).colorScheme.primary,
+                  strokeWidth: 2,
+                ),
+              );
+            }
+            if (state is BookmarkDone) {
+              return _buildArticlesList(context, state.articles!);
+            }
+            return const SizedBox();
+          },
+        );
       },
+    );
+  }
+
+  Widget _buildSignInPrompt(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final secondaryColor = Theme.of(context).textTheme.bodyMedium!.color!;
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Ionicons.bookmark_outline, color: secondaryColor, size: 48),
+          const SizedBox(height: 12),
+          Text(
+            'Sign in to see your bookmarks',
+            style: TextStyle(
+              color: colorScheme.onSurface,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Your saved articles are linked to your account',
+            style: TextStyle(color: secondaryColor, fontSize: 14),
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () => Navigator.pushNamed(context, '/Login'),
+            child: const Text('Sign In'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -40,8 +80,9 @@ class SavedArticlesPage extends StatelessWidget {
       itemBuilder: (context, index) => ArticleWidget(
         article: articles[index],
         isRemovable: true,
+        isJournalistArticle: articles[index].firestoreId != null,
         onRemove: (article) =>
-            context.read<LocalArticleBloc>().add(RemoveArticle(article)),
+            context.read<BookmarkBloc>().add(RemoveBookmark(article)),
         onArticlePressed: (article) =>
             Navigator.pushNamed(context, '/ArticleDetails', arguments: article),
       ),

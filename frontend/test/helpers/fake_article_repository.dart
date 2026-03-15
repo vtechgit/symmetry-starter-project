@@ -60,4 +60,8 @@ class FakeArticleRepository implements ArticleRepository {
 
   @override
   Future<void> removeArticle(ArticleEntity article) async {}
+
+  @override
+  Future<DataState<void>> deleteArticle(String articleId) async =>
+      const DataSuccess(null);
 }

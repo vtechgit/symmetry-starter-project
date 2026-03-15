@@ -1,13 +1,22 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:news_app_clean_architecture/core/utils/auth_guard.dart';
+import 'package:news_app_clean_architecture/injection_container.dart';
 import '../../domain/entities/article.dart';
+import '../bloc/article/social/social_bloc.dart';
+import '../bloc/article/social/social_event.dart';
+import '../bloc/article/social/social_state.dart';
+import 'comments_bottom_sheet.dart';
 
 class ArticleWidget extends StatelessWidget {
   final ArticleEntity? article;
   final bool? isRemovable;
   final bool showJournalistBadge;
+  final bool isJournalistArticle;
   final void Function(ArticleEntity article)? onRemove;
+  final void Function(ArticleEntity article)? onDelete;
   final void Function(ArticleEntity article)? onArticlePressed;
 
   const ArticleWidget({
@@ -16,37 +25,60 @@ class ArticleWidget extends StatelessWidget {
     this.onArticlePressed,
     this.isRemovable = false,
     this.showJournalistBadge = false,
+    this.isJournalistArticle = false,
     this.onRemove,
+    this.onDelete,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    if (isJournalistArticle && article?.firestoreId != null) {
+      return BlocProvider(
+        key: ValueKey(article!.firestoreId),
+        create: (_) => sl<SocialBloc>()
+          ..add(SocialLoadRequested(
+            articleId: article!.firestoreId!,
+            initialLikeCount: article!.likeCount ?? 0,
+            initialCommentCount: article!.commentCount ?? 0,
+          )),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: _onTap,
+          child: _buildTile(context),
+        ),
+      );
+    }
+
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: _onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          border: Border(
-            bottom: BorderSide(color: Theme.of(context).dividerColor, width: 0.5),
-          ),
+      child: _buildTile(context),
+    );
+  }
+
+  Widget _buildTile(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        border: Border(
+          bottom: BorderSide(color: Theme.of(context).dividerColor, width: 0.5),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(context),
-            const SizedBox(height: 8),
-            _buildTitle(context),
-            if (article?.description != null && article!.description!.isNotEmpty)
-              _buildDescription(context),
-            if (article?.urlToImage != null && article!.urlToImage!.isNotEmpty)
-              _buildImage(context),
-            const SizedBox(height: 10),
-            _buildActions(context),
-          ],
-        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(context),
+          const SizedBox(height: 8),
+          _buildTitle(context),
+          if (article?.description != null && article!.description!.isNotEmpty)
+            _buildDescription(context),
+          if (article?.urlToImage != null && article!.urlToImage!.isNotEmpty)
+            _buildImage(context),
+          const SizedBox(height: 10),
+          _buildActions(context),
+        ],
       ),
     );
   }
@@ -107,8 +139,18 @@ class ArticleWidget extends StatelessWidget {
             ],
           ),
         ),
+        if (onDelete != null)
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => onDelete!(article!),
+            child: Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: Icon(Icons.delete_outline, color: secondaryColor, size: 18),
+            ),
+          ),
         if (isRemovable == true)
           GestureDetector(
+            behavior: HitTestBehavior.opaque,
             onTap: _onRemove,
             child: Padding(
               padding: const EdgeInsets.only(left: 8),
@@ -181,15 +223,43 @@ class ArticleWidget extends StatelessWidget {
 
   Widget _buildActions(BuildContext context) {
     final secondaryColor = Theme.of(context).textTheme.bodyMedium!.color!;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _buildActionItem(Icons.chat_bubble_outline, '0', secondaryColor),
-        _buildActionItem(Icons.repeat, '0', secondaryColor),
-        _buildActionItem(Icons.favorite_border, '0', secondaryColor),
-        _buildActionItem(Icons.ios_share_outlined, null, secondaryColor,
-            onTap: _onShare),
-      ],
+
+    if (!isJournalistArticle) {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          _buildActionItem(Icons.ios_share_outlined, null, secondaryColor,
+              onTap: _onShare),
+        ],
+      );
+    }
+
+    return BlocBuilder<SocialBloc, SocialState>(
+      builder: (context, state) {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildActionItem(
+              Icons.chat_bubble_outline,
+              '${state.commentCount}',
+              secondaryColor,
+              onTap: () => requireAuth(context, () {
+                showCommentsBottomSheet(context, article!.firestoreId!);
+              }),
+            ),
+            _buildActionItem(
+              state.isLiked ? Icons.favorite : Icons.favorite_border,
+              '${state.likeCount}',
+              state.isLiked ? Colors.red : secondaryColor,
+              onTap: () => requireAuth(context, () {
+                context.read<SocialBloc>().add(LikeToggled(article!.firestoreId!));
+              }),
+            ),
+            _buildActionItem(Icons.ios_share_outlined, null, secondaryColor,
+                onTap: _onShare),
+          ],
+        );
+      },
     );
   }
 

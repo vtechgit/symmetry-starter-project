@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_state.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/firestore/firestore_article_bloc.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/firestore/firestore_article_event.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/firestore/firestore_article_state.dart';
@@ -100,18 +102,57 @@ class _FirestoreFeedPageState extends State<FirestoreFeedPage> {
             },
             child: filtered.isEmpty
                 ? _buildNoResultsState(context)
-                : ListView.builder(
-                    itemCount: filtered.length,
-                    itemBuilder: (context, index) => ArticleWidget(
-                      article: filtered[index],
-                      showJournalistBadge: true,
-                      onArticlePressed: (article) =>
-                          Navigator.pushNamed(context, '/ArticleDetails', arguments: article),
-                    ),
+                : Builder(
+                    builder: (context) {
+                      final authState = context.watch<AuthBloc>().state;
+                      final currentUid = authState is AuthAuthenticated ? authState.user.uid : null;
+                      return ListView.builder(
+                        itemCount: filtered.length,
+                        itemBuilder: (context, index) {
+                          final article = filtered[index];
+                          final isOwner = currentUid != null && article.authorId == currentUid;
+                          return ArticleWidget(
+                            article: article,
+                            showJournalistBadge: true,
+                            isJournalistArticle: true,
+                            onArticlePressed: (a) =>
+                                Navigator.pushNamed(context, '/ArticleDetails', arguments: a),
+                            onDelete: isOwner
+                                ? (a) => _confirmDelete(context, a)
+                                : null,
+                          );
+                        },
+                      );
+                    },
                   ),
           ),
         ),
       ],
+    );
+  }
+
+  void _confirmDelete(BuildContext context, ArticleEntity article) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Unpublish article?'),
+        content: const Text('This will permanently remove your article.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              context.read<FirestoreArticlesBloc>().add(
+                    DeleteFirestoreArticle(article.firestoreId!),
+                  );
+            },
+            child: const Text('Unpublish', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
     );
   }
 

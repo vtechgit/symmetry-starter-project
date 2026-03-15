@@ -6,8 +6,12 @@ import 'package:news_app_clean_architecture/config/theme/theme_cubit.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/firestore/firestore_article_bloc.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/firestore/firestore_article_event.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/firestore/firestore_article_state.dart';
-import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/local/local_article_bloc.dart';
-import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/local/local_article_event.dart';
+import 'package:news_app_clean_architecture/core/utils/auth_guard.dart';
+import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_event.dart';
+import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_state.dart';
+import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/bookmark/bookmark_bloc.dart';
+import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/bookmark/bookmark_event.dart';
 import 'package:news_app_clean_architecture/injection_container.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/pages/saved_article/saved_article.dart';
 import 'firestore_feed_page.dart';
@@ -37,7 +41,7 @@ class _DailyNewsState extends State<DailyNews> {
           create: (_) => sl<FirestoreArticlesBloc>()..add(const GetFirestoreArticles()),
         ),
         BlocProvider(
-          create: (_) => sl<LocalArticleBloc>()..add(const GetSavedArticles()),
+          create: (_) => sl<BookmarkBloc>()..add(const GetBookmarks()),
         ),
       ],
       child: Builder(
@@ -80,6 +84,24 @@ class _DailyNewsState extends State<DailyNews> {
           ),
           onPressed: () => context.read<ThemeCubit>().toggleTheme(),
         ),
+        BlocBuilder<AuthBloc, AuthState>(
+          builder: (context, authState) {
+            final isLoggedIn = authState is AuthAuthenticated;
+            return IconButton(
+              icon: Icon(
+                isLoggedIn ? Icons.person : Icons.person_outline,
+                color: isDark ? XColors.textPrimary : XLightColors.textPrimary,
+              ),
+              onPressed: () {
+                if (isLoggedIn) {
+                  context.read<AuthBloc>().add(const AuthSignedOut());
+                } else {
+                  Navigator.pushNamed(context, '/Login');
+                }
+              },
+            );
+          },
+        ),
       ],
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(0.5),
@@ -99,7 +121,12 @@ class _DailyNewsState extends State<DailyNews> {
 
     return BottomNavigationBar(
       currentIndex: _selectedIndex,
-      onTap: _onTabTapped,
+      onTap: (index) {
+        if (index == 2) {
+          context.read<BookmarkBloc>().add(const GetBookmarks());
+        }
+        _onTabTapped(index);
+      },
       items: [
         const BottomNavigationBarItem(
           icon: Icon(Ionicons.home_outline),
@@ -126,8 +153,10 @@ class _DailyNewsState extends State<DailyNews> {
 
   Widget _buildFab() {
     return FloatingActionButton(
-      onPressed: () => Navigator.pushNamed(context, '/PublishArticle')
-          .then((_) => setState(() => _selectedIndex = 1)),
+      onPressed: () => requireAuth(context, () {
+        Navigator.pushNamed(context, '/PublishArticle')
+            .then((_) => setState(() => _selectedIndex = 1));
+      }),
       child: const Icon(Icons.edit_outlined),
     );
   }
