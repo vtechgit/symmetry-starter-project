@@ -1,6 +1,6 @@
 {
-    "name": "news_app_clean_architecture",
-    "short_name": "news_app_clean_architecture",
+    "name": "Symmetry News",
+    "short_name": "Symmetry News",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
