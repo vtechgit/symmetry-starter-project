@@ -1,86 +1,77 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:ionicons/ionicons.dart';
-import '../../../../../injection_container.dart';
 import '../../../domain/entities/article.dart';
 import '../../bloc/article/local/local_article_bloc.dart';
 import '../../bloc/article/local/local_article_event.dart';
 import '../../bloc/article/local/local_article_state.dart';
 import '../../widgets/article_tile.dart';
 
-class SavedArticles extends HookWidget {
-  const SavedArticles({Key ? key}) : super(key: key);
+// Embedded tab widget — BlocProvider is supplied by the parent shell
+class SavedArticlesPage extends StatelessWidget {
+  const SavedArticlesPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => sl<LocalArticleBloc>()..add(const GetSavedArticles()),
-      child: Scaffold(
-        appBar: _buildAppBar(),
-        body: _buildBody(),
-      ),
-    );
-  }
-
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      leading: Builder(
-        builder: (context) => GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () => _onBackButtonTapped(context),
-          child: const Icon(Ionicons.chevron_back, color: Colors.black),
-        ),
-      ),
-      title: const Text('Saved Articles', style: TextStyle(color: Colors.black)),
-    );
-  }
-
-  Widget _buildBody() {
     return BlocBuilder<LocalArticleBloc, LocalArticlesState>(
       builder: (context, state) {
         if (state is LocalArticlesLoading) {
-          return const Center(child: CupertinoActivityIndicator());
-        } else if (state is LocalArticlesDone) {
-          return _buildArticlesList(state.articles!);
+          return Center(
+            child: CircularProgressIndicator(
+              color: Theme.of(context).colorScheme.primary,
+              strokeWidth: 2,
+            ),
+          );
         }
-        return Container();
+        if (state is LocalArticlesDone) {
+          return _buildArticlesList(context, state.articles!);
+        }
+        return const SizedBox();
       },
     );
   }
 
-  Widget _buildArticlesList(List<ArticleEntity> articles) {
+  Widget _buildArticlesList(BuildContext context, List<ArticleEntity> articles) {
     if (articles.isEmpty) {
-      return const Center(
-          child: Text(
-        'NO SAVED ARTICLES',
-        style: TextStyle(color: Colors.black),
-      ));
+      return _buildEmptyState(context);
     }
-
     return ListView.builder(
       itemCount: articles.length,
-      itemBuilder: (context, index) {
-        return ArticleWidget(
-          article: articles[index],
-          isRemovable: true,
-          onRemove: (article) => _onRemoveArticle(context, article),
-          onArticlePressed: (article) => _onArticlePressed(context, article),
-        );
-      },
+      itemBuilder: (context, index) => ArticleWidget(
+        article: articles[index],
+        isRemovable: true,
+        onRemove: (article) =>
+            context.read<LocalArticleBloc>().add(RemoveArticle(article)),
+        onArticlePressed: (article) =>
+            Navigator.pushNamed(context, '/ArticleDetails', arguments: article),
+      ),
     );
   }
 
-  void _onBackButtonTapped(BuildContext context) {
-    Navigator.pop(context);
-  }
-
-  void _onRemoveArticle(BuildContext context, ArticleEntity article) {
-    BlocProvider.of<LocalArticleBloc>(context).add(RemoveArticle(article));
-  }
-
-  void _onArticlePressed(BuildContext context, ArticleEntity article) {
-    Navigator.pushNamed(context, '/ArticleDetails', arguments: article);
+  Widget _buildEmptyState(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final secondaryColor = Theme.of(context).textTheme.bodyMedium!.color!;
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Ionicons.bookmark_outline, color: secondaryColor, size: 48),
+          const SizedBox(height: 12),
+          Text(
+            'Nothing saved yet',
+            style: TextStyle(
+              color: colorScheme.onSurface,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Articles you save will appear here',
+            style: TextStyle(color: secondaryColor, fontSize: 14),
+          ),
+        ],
+      ),
+    );
   }
 }
