@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ionicons/ionicons.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../../../injection_container.dart';
 import '../../../domain/entities/article.dart';
 import '../../bloc/article/local/local_article_bloc.dart';
@@ -45,6 +46,18 @@ class ArticleDetailsView extends StatelessWidget {
         ),
       ),
       actions: [
+        GestureDetector(
+          onTap: _onShareTapped,
+          child: Container(
+            margin: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.5),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Ionicons.share_outline, color: Colors.white, size: 20),
+          ),
+        ),
         Builder(
           builder: (context) => GestureDetector(
             onTap: () => _onBookmarkTapped(context),
@@ -184,6 +197,13 @@ class ArticleDetailsView extends StatelessWidget {
   String get _authorInitial {
     final author = article?.author ?? 'U';
     return author.isNotEmpty ? author[0].toUpperCase() : 'U';
+  }
+
+  void _onShareTapped() {
+    final text = [article?.title, article?.description]
+        .where((s) => s != null && s.isNotEmpty)
+        .join('\n\n');
+    Share.share(text);
   }
 
   void _onBookmarkTapped(BuildContext context) {

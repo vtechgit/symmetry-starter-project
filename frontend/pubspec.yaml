@@ -44,6 +44,9 @@ dependencies:
   # File picker (web + native)
   file_picker: ^6.1.1
 
+  # Share via Web Share API
+  share_plus: ^7.2.0
+
 
   #Hooks
   flutter_hooks: ^0.18.3

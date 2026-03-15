@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../domain/entities/article.dart';
 
 class ArticleWidget extends StatelessWidget {
@@ -186,13 +187,15 @@ class ArticleWidget extends StatelessWidget {
         _buildActionItem(Icons.chat_bubble_outline, '0', secondaryColor),
         _buildActionItem(Icons.repeat, '0', secondaryColor),
         _buildActionItem(Icons.favorite_border, '0', secondaryColor),
-        _buildActionItem(Icons.ios_share_outlined, null, secondaryColor),
+        _buildActionItem(Icons.ios_share_outlined, null, secondaryColor,
+            onTap: _onShare),
       ],
     );
   }
 
-  Widget _buildActionItem(IconData icon, String? count, Color color) {
-    return Row(
+  Widget _buildActionItem(IconData icon, String? count, Color color,
+      {VoidCallback? onTap}) {
+    final content = Row(
       children: [
         Icon(icon, size: 18, color: color),
         if (count != null) ...[
@@ -201,6 +204,22 @@ class ArticleWidget extends StatelessWidget {
         ],
       ],
     );
+    if (onTap == null) return content;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: content,
+      ),
+    );
+  }
+
+  void _onShare() {
+    final text = [article?.title, article?.description]
+        .where((s) => s != null && s.isNotEmpty)
+        .join('\n\n');
+    Share.share(text);
   }
 
   String get _authorInitial {

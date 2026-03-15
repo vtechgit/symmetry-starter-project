@@ -5,6 +5,7 @@ import 'package:news_app_clean_architecture/config/theme/app_themes.dart';
 import 'package:news_app_clean_architecture/config/theme/theme_cubit.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/firestore/firestore_article_bloc.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/firestore/firestore_article_event.dart';
+import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/firestore/firestore_article_state.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/local/local_article_bloc.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/local/local_article_event.dart';
 import 'package:news_app_clean_architecture/injection_container.dart';
@@ -39,18 +40,20 @@ class _DailyNewsState extends State<DailyNews> {
           create: (_) => sl<LocalArticleBloc>()..add(const GetSavedArticles()),
         ),
       ],
-      child: Scaffold(
-        appBar: _buildAppBar(context),
-        body: IndexedStack(
-          index: _selectedIndex,
-          children: const [
-            NewsFeedPage(),
-            FirestoreFeedPage(),
-            SavedArticlesPage(),
-          ],
+      child: Builder(
+        builder: (innerCtx) => Scaffold(
+          appBar: _buildAppBar(context),
+          body: IndexedStack(
+            index: _selectedIndex,
+            children: const [
+              NewsFeedPage(),
+              FirestoreFeedPage(),
+              SavedArticlesPage(),
+            ],
+          ),
+          bottomNavigationBar: _buildBottomNav(innerCtx),
+          floatingActionButton: _selectedIndex < 2 ? _buildFab() : null,
         ),
-        bottomNavigationBar: _buildBottomNav(),
-        floatingActionButton: _selectedIndex < 2 ? _buildFab() : null,
       ),
     );
   }
@@ -88,22 +91,31 @@ class _DailyNewsState extends State<DailyNews> {
     );
   }
 
-  Widget _buildBottomNav() {
+  Widget _buildBottomNav(BuildContext context) {
+    final firestoreState = context.watch<FirestoreArticlesBloc>().state;
+    final articleCount = firestoreState is FirestoreArticlesDone
+        ? (firestoreState.articles?.length ?? 0)
+        : 0;
+
     return BottomNavigationBar(
       currentIndex: _selectedIndex,
       onTap: _onTabTapped,
-      items: const [
-        BottomNavigationBarItem(
+      items: [
+        const BottomNavigationBarItem(
           icon: Icon(Ionicons.home_outline),
           activeIcon: Icon(Ionicons.home),
           label: 'Home',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Ionicons.newspaper_outline),
-          activeIcon: Icon(Ionicons.newspaper),
+          icon: Badge(
+            isLabelVisible: articleCount > 0,
+            label: Text('$articleCount'),
+            child: const Icon(Ionicons.newspaper_outline),
+          ),
+          activeIcon: const Icon(Ionicons.newspaper),
           label: 'Journalist',
         ),
-        BottomNavigationBarItem(
+        const BottomNavigationBarItem(
           icon: Icon(Ionicons.bookmark_outline),
           activeIcon: Icon(Ionicons.bookmark),
           label: 'Bookmarks',
