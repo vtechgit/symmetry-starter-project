@@ -7,14 +7,21 @@ class FirestoreArticleService {
   FirestoreArticleService(this._firestore);
 
   Future<List<ArticleModel>> getArticles() async {
-    final snapshot = await _firestore.collection('articles').get();
+    final snapshot = await _firestore
+        .collection('articles')
+        .orderBy('createdAt', descending: true)
+        .get();
     return snapshot.docs
         .map((doc) => ArticleModel.fromFirestore(doc.data()))
         .toList();
   }
 
   Stream<List<ArticleModel>> watchArticles() {
-    return _firestore.collection('articles').snapshots().map(
+    return _firestore
+        .collection('articles')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map(
           (snapshot) => snapshot.docs
               .map((doc) => ArticleModel.fromFirestore(doc.data()))
               .toList(),

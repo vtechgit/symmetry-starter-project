@@ -41,6 +41,9 @@ dependencies:
   cloud_firestore: ^4.13.3
   firebase_storage: ^11.5.5
 
+  # File picker (web + native)
+  file_picker: ^6.1.1
+
 
   #Hooks
   flutter_hooks: ^0.18.3

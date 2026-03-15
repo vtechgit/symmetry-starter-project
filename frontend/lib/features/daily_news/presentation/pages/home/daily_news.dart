@@ -114,7 +114,8 @@ class _DailyNewsState extends State<DailyNews> {
 
   Widget _buildFab() {
     return FloatingActionButton(
-      onPressed: () => Navigator.pushNamed(context, '/PublishArticle'),
+      onPressed: () => Navigator.pushNamed(context, '/PublishArticle')
+          .then((_) => setState(() => _selectedIndex = 1)),
       child: const Icon(Icons.edit_outlined),
     );
   }
