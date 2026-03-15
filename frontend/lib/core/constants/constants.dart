@@ -9,3 +9,6 @@ const String kOpenRouterApiKey = String.fromEnvironment('OPENROUTER_API_KEY', de
 const String kOpenRouterBaseUrl = 'https://openrouter.ai/api/v1';
 const String kOpenRouterModel = 'nvidia/nemotron-3-super-120b-a12b:free';
 const String kGeminiApiKey = String.fromEnvironment('GEMINI_API_KEY', defaultValue: '');
+
+// AI Chat — small/fast model for near-instant conversational responses
+const String kChatModel = 'nvidia/nemotron-3-super-120b-a12b:free';

@@ -52,6 +52,11 @@ import 'features/ai_article/data/repository/ai_article_repository_impl.dart';
 import 'features/ai_article/domain/repository/ai_article_repository.dart';
 import 'features/ai_article/domain/usecases/generate_article_usecase.dart';
 import 'features/ai_article/presentation/bloc/generate_article_bloc.dart';
+import 'features/ai_chat/data/data_sources/ai_chat_service.dart';
+import 'features/ai_chat/data/repository/ai_chat_repository_impl.dart';
+import 'features/ai_chat/domain/repository/ai_chat_repository.dart';
+import 'features/ai_chat/domain/usecases/send_chat_message_usecase.dart';
+import 'features/ai_chat/presentation/bloc/ai_chat_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -146,6 +151,12 @@ Future<void> initializeDependencies() async {
   );
   sl.registerSingleton<GenerateArticleUseCase>(GenerateArticleUseCase(sl()));
   sl.registerFactory<GenerateArticleBloc>(() => GenerateArticleBloc(sl()));
+
+  // AI Chat — shares Dio singleton, kOpenRouterApiKey, kOpenRouterBaseUrl
+  sl.registerSingleton<AiChatService>(AiChatService(sl()));
+  sl.registerSingleton<AiChatRepository>(AiChatRepositoryImpl(sl()));
+  sl.registerSingleton<SendChatMessageUseCase>(SendChatMessageUseCase(sl()));
+  sl.registerFactory<AiChatBloc>(() => AiChatBloc(sl()));
 
   // Blocs
   sl.registerFactory<RemoteArticlesBloc>(() => RemoteArticlesBloc(sl()));

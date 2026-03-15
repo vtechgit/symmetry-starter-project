@@ -12,6 +12,9 @@ import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/bookmark/bookmark_bloc.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/bookmark/bookmark_event.dart';
 import 'package:news_app_clean_architecture/core/widgets/max_width_container.dart';
+import 'package:news_app_clean_architecture/features/ai_chat/presentation/bloc/ai_chat_bloc.dart';
+import 'package:news_app_clean_architecture/features/ai_chat/presentation/bloc/ai_chat_event.dart';
+import 'package:news_app_clean_architecture/features/ai_chat/presentation/pages/ai_chat_page.dart';
 import 'package:news_app_clean_architecture/injection_container.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/pages/saved_article/saved_article.dart';
 import 'firestore_feed_page.dart';
@@ -27,7 +30,7 @@ class DailyNews extends StatefulWidget {
 class _DailyNewsState extends State<DailyNews> {
   int _selectedIndex = 0;
 
-  static const _titles = ['For You', 'Journalist', 'Bookmarks'];
+  static const _titles = ['For You', 'Journalist', 'AI Chat', 'Bookmarks'];
 
   void _onTabTapped(int index) {
     setState(() => _selectedIndex = index);
@@ -43,16 +46,20 @@ class _DailyNewsState extends State<DailyNews> {
         BlocProvider(
           create: (_) => sl<BookmarkBloc>()..add(const GetBookmarks()),
         ),
+        BlocProvider(
+          create: (_) => sl<AiChatBloc>(),
+        ),
       ],
       child: Builder(
         builder: (innerCtx) => Scaffold(
-          appBar: _buildAppBar(context),
+          appBar: _buildAppBar(innerCtx),
           body: MaxWidthContainer(
             child: IndexedStack(
               index: _selectedIndex,
               children: const [
                 NewsFeedPage(),
                 FirestoreFeedPage(),
+                AiChatPage(),
                 SavedArticlesPage(),
               ],
             ),
@@ -79,6 +86,16 @@ class _DailyNewsState extends State<DailyNews> {
         ),
       ),
       actions: [
+        if (_selectedIndex == 2)
+          IconButton(
+            icon: Icon(
+              Icons.delete_sweep_outlined,
+              color: isDark ? XColors.textPrimary : XLightColors.textPrimary,
+            ),
+            onPressed: () =>
+                context.read<AiChatBloc>().add(const AiChatCleared()),
+            tooltip: 'Clear chat',
+          ),
         IconButton(
           icon: Icon(
             isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
@@ -124,7 +141,7 @@ class _DailyNewsState extends State<DailyNews> {
     return BottomNavigationBar(
       currentIndex: _selectedIndex,
       onTap: (index) {
-        if (index == 2) {
+        if (index == 3) {
           context.read<BookmarkBloc>().add(const GetBookmarks());
         }
         _onTabTapped(index);
@@ -143,6 +160,11 @@ class _DailyNewsState extends State<DailyNews> {
           ),
           activeIcon: const Icon(Ionicons.newspaper),
           label: 'Journalist',
+        ),
+        const BottomNavigationBarItem(
+          icon: Icon(Ionicons.chatbubble_ellipses_outline),
+          activeIcon: Icon(Ionicons.chatbubble_ellipses),
+          label: 'AI Chat',
         ),
         const BottomNavigationBarItem(
           icon: Icon(Ionicons.bookmark_outline),
