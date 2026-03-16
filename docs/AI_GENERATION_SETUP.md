@@ -27,6 +27,18 @@ Swapping AI providers requires changing **one line** in `lib/injection_container
 2. Navigate to **Keys** → **Create Key**.
 3. Copy the key (starts with `sk-or-...`).
 
+### 2. Enable provider data sharing (required for free models)
+
+Free models on OpenRouter are served by third-party providers (Nvidia, Venice, etc.). By default, new accounts may have privacy restrictions that block all available providers, causing a **404 "No endpoints available"** error.
+
+To fix this:
+
+1. Go to [openrouter.ai/settings/privacy](https://openrouter.ai/settings/privacy).
+2. Enable **"Allow providers to train on my data"** (or the equivalent data-sharing toggle).
+3. Save.
+
+> This is required to use the free tier. Paid models with BYOK (bring your own key) bypass this restriction.
+
 ### 2. Pass the key at run/build time
 
 The key is never hardcoded — it is injected via `--dart-define`:
@@ -98,7 +110,10 @@ Defined in `lib/core/constants/constants.dart`:
 |----------|-------------|
 | `kOpenRouterApiKey` | Injected via `--dart-define=OPENROUTER_API_KEY=...` |
 | `kOpenRouterBaseUrl` | `https://openrouter.ai/api/v1` |
-| `kOpenRouterModel` | `meta-llama/llama-3.3-70b-instruct:free` |
+| `kOpenRouterModel` | Model used for article generation (`nvidia/nemotron-3-super-120b-a12b:free`) |
+| `kChatModel` | Model used for AI Chat (`nvidia/nemotron-3-super-120b-a12b:free`) |
 | `kGeminiApiKey` | Injected via `--dart-define=GEMINI_API_KEY=...` |
 
-To change the OpenRouter model (e.g. to a paid model with better quality), update `kOpenRouterModel` in `constants.dart`. A list of available models is at [openrouter.ai/models](https://openrouter.ai/models).
+To change either model, update the corresponding constant in `constants.dart`. A list of available models is at [openrouter.ai/models](https://openrouter.ai/models).
+
+> **Note on free model availability:** Free models are subject to upstream rate limits and provider routing. If a model returns 429 (rate limited) or 404 (no endpoints), switch to another free model in `constants.dart`. The `nvidia/nemotron-3-super-120b-a12b:free` model has proven reliable as it routes through Nvidia's own infrastructure.

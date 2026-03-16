@@ -3,6 +3,7 @@ import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth
 import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_event.dart';
 import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_state.dart';
 import '../../../../helpers/fake_auth_repository.dart';
+import 'package:news_app_clean_architecture/features/auth/domain/usecases/change_password_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_in_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/register_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_out_usecase.dart';
@@ -16,6 +17,7 @@ AuthBloc _makeBloc(FakeAuthRepository repo) {
     signIn: SignInUseCase(repo),
     register: RegisterUseCase(repo),
     updateProfile: UpdateProfileUseCase(repo),
+    changePassword: ChangePasswordUseCase(repo),
   ));
 }
 
@@ -67,6 +69,44 @@ void main() {
         ]),
       );
       bloc.add(const RegisterRequested(email: 'new@example.com', password: 'password123'));
+    });
+  });
+
+  group('ChangePasswordRequested', () {
+    test('emits Loading, AuthPasswordChanged, then AuthAuthenticated on success',
+        () async {
+      // Sign in first so bloc has a current user
+      bloc.add(const SignInRequested(
+          email: 'test@example.com', password: 'password123'));
+      await bloc.stream.firstWhere((s) => s is AuthAuthenticated);
+
+      expect(
+        bloc.stream,
+        emitsInOrder([
+          isA<AuthLoading>(),
+          isA<AuthPasswordChanged>(),
+          isA<AuthAuthenticated>(),
+        ]),
+      );
+      bloc.add(const ChangePasswordRequested(
+        currentPassword: 'oldPass',
+        newPassword: 'newPass123',
+      ));
+    });
+
+    test('emits Loading then AuthError when repository fails', () async {
+      repo.failChangePassword = true;
+      expect(
+        bloc.stream,
+        emitsInOrder([
+          isA<AuthLoading>(),
+          isA<AuthError>(),
+        ]),
+      );
+      bloc.add(const ChangePasswordRequested(
+        currentPassword: 'wrongPass',
+        newPassword: 'newPass123',
+      ));
     });
   });
 }
