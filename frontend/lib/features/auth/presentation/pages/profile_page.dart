@@ -46,6 +46,13 @@ class _ProfilePageState extends State<ProfilePage> {
           Navigator.of(context).popUntil((route) => route.isFirst);
         } else if (state is AuthAuthenticated) {
           setState(() => _photoURL = state.user.photoURL);
+        } else if (state is AuthError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Colors.red,
+            ),
+          );
         }
       },
       child: BlocBuilder<AuthBloc, AuthState>(
@@ -83,7 +90,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   _buildNameField(),
                   const SizedBox(height: 16),
                   _buildEmailField(),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 16),
+                  _buildChangePasswordButton(),
+                  const SizedBox(height: 24),
                   _buildLogoutButton(),
                 ],
               ),
@@ -190,6 +199,132 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Widget _buildChangePasswordButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: () => _showChangePasswordSheet(context),
+        icon: const Icon(Icons.lock_outline),
+        label: const Text('Change Password'),
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      ),
+    );
+  }
+
+  void _showChangePasswordSheet(BuildContext pageContext) {
+    final currentCtrl = TextEditingController();
+    final newCtrl = TextEditingController();
+    final confirmCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showModalBottomSheet(
+      context: pageContext,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return BlocProvider.value(
+          value: pageContext.read<AuthBloc>(),
+          child: BlocConsumer<AuthBloc, AuthState>(
+            listener: (ctx, state) {
+              if (state is AuthPasswordChanged) {
+                Navigator.of(sheetContext).pop();
+                ScaffoldMessenger.of(pageContext).showSnackBar(
+                  const SnackBar(content: Text('Password changed successfully.')),
+                );
+              } else if (state is AuthError) {
+                ScaffoldMessenger.of(pageContext).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            builder: (ctx, state) {
+              final isLoading = state is AuthLoading;
+              return Padding(
+                padding: EdgeInsets.fromLTRB(
+                  24,
+                  24,
+                  24,
+                  MediaQuery.of(sheetContext).viewInsets.bottom + 24,
+                ),
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Change Password',
+                        style: Theme.of(sheetContext).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 20),
+                      _PasswordField(
+                        controller: currentCtrl,
+                        label: 'Current password',
+                        validator: (v) =>
+                            (v == null || v.isEmpty) ? 'Required' : null,
+                      ),
+                      const SizedBox(height: 12),
+                      _PasswordField(
+                        controller: newCtrl,
+                        label: 'New password',
+                        validator: (v) => (v == null || v.length < 6)
+                            ? 'At least 6 characters'
+                            : null,
+                      ),
+                      const SizedBox(height: 12),
+                      _PasswordField(
+                        controller: confirmCtrl,
+                        label: 'Confirm new password',
+                        validator: (v) => v != newCtrl.text
+                            ? 'Passwords do not match'
+                            : null,
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: isLoading
+                            ? null
+                            : () {
+                                if (formKey.currentState!.validate()) {
+                                  pageContext.read<AuthBloc>().add(
+                                        ChangePasswordRequested(
+                                          currentPassword: currentCtrl.text,
+                                          newPassword: newCtrl.text,
+                                        ),
+                                      );
+                                }
+                              },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: isLoading
+                            ? const SizedBox(
+                                height: 18,
+                                width: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Text('Update Password'),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildLogoutButton() {
     return SizedBox(
       width: double.infinity,
@@ -248,5 +383,42 @@ class _ProfilePageState extends State<ProfilePage> {
           displayName: name.isEmpty ? null : name,
           photoURL: _photoURL,
         ));
+  }
+}
+
+class _PasswordField extends StatefulWidget {
+  final TextEditingController controller;
+  final String label;
+  final String? Function(String?) validator;
+
+  const _PasswordField({
+    required this.controller,
+    required this.label,
+    required this.validator,
+  });
+
+  @override
+  State<_PasswordField> createState() => _PasswordFieldState();
+}
+
+class _PasswordFieldState extends State<_PasswordField> {
+  bool _obscure = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: widget.controller,
+      obscureText: _obscure,
+      validator: widget.validator,
+      decoration: InputDecoration(
+        labelText: widget.label,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        prefixIcon: const Icon(Icons.lock_outline),
+        suffixIcon: IconButton(
+          icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
+          onPressed: () => setState(() => _obscure = !_obscure),
+        ),
+      ),
+    );
   }
 }

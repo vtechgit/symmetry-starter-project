@@ -10,5 +10,9 @@ abstract class AuthRepository {
   Stream<AuthUserEntity?> watchAuthState();
   Future<DataState<AuthUserEntity>> updateProfile(String? displayName, String? photoURL);
   Future<DataState<String>> uploadProfilePhoto(Uint8List bytes, String uid, String fileName);
+  Future<DataState<void>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  });
   Future<DataState<AuthUserEntity>> signInWithGoogle();
 }

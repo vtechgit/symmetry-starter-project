@@ -8,6 +8,7 @@ import 'config/theme/theme_cubit.dart';
 import 'package:news_app_clean_architecture/features/auth/data/data_sources/firebase_auth_service.dart';
 import 'package:news_app_clean_architecture/features/auth/data/repository/auth_repository_impl.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/repository/auth_repository.dart';
+import 'package:news_app_clean_architecture/features/auth/domain/usecases/change_password_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/register_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_in_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_in_with_google_usecase.dart';
@@ -135,6 +136,7 @@ Future<void> initializeDependencies() async {
   sl.registerSingleton<RegisterUseCase>(RegisterUseCase(sl()));
   sl.registerSingleton<UpdateProfileUseCase>(UpdateProfileUseCase(sl()));
   sl.registerSingleton<UploadProfilePhotoUseCase>(UploadProfilePhotoUseCase(sl()));
+  sl.registerSingleton<ChangePasswordUseCase>(ChangePasswordUseCase(sl()));
   sl.registerSingleton<SignInWithGoogleUseCase>(SignInWithGoogleUseCase(sl()));
   sl.registerSingleton<AuthUseCases>(AuthUseCases(
     watchAuthState: sl(),
@@ -142,6 +144,7 @@ Future<void> initializeDependencies() async {
     signIn: sl(),
     register: sl(),
     updateProfile: sl(),
+    changePassword: sl(),
     signInWithGoogle: sl(),
   ));
 

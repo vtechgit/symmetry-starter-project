@@ -45,6 +45,19 @@ class ProfileUpdateRequested extends AuthEvent {
   List<Object?> get props => [displayName, photoURL];
 }
 
+class ChangePasswordRequested extends AuthEvent {
+  final String currentPassword;
+  final String newPassword;
+
+  const ChangePasswordRequested({
+    required this.currentPassword,
+    required this.newPassword,
+  });
+
+  @override
+  List<Object?> get props => [currentPassword, newPassword];
+}
+
 class GoogleSignInRequested extends AuthEvent {
   const GoogleSignInRequested();
 }

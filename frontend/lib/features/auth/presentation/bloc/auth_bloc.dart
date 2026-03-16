@@ -1,11 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:news_app_clean_architecture/core/resources/data_state.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/entities/auth_user_entity.dart';
+import 'package:news_app_clean_architecture/features/auth/domain/usecases/change_password_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/register_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_in_usecase.dart';
+import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_in_with_google_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/update_profile_usecase.dart';
-import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_in_with_google_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/watch_auth_state_usecase.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
@@ -16,6 +17,7 @@ class AuthUseCases {
   final SignInUseCase signIn;
   final RegisterUseCase register;
   final UpdateProfileUseCase updateProfile;
+  final ChangePasswordUseCase changePassword;
   final SignInWithGoogleUseCase signInWithGoogle;
 
   const AuthUseCases({
@@ -24,6 +26,7 @@ class AuthUseCases {
     required this.signIn,
     required this.register,
     required this.updateProfile,
+    required this.changePassword,
     required this.signInWithGoogle,
   });
 }
@@ -37,6 +40,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<SignInRequested>(_onSignInRequested);
     on<RegisterRequested>(_onRegisterRequested);
     on<ProfileUpdateRequested>(_onProfileUpdateRequested);
+    on<ChangePasswordRequested>(_onChangePasswordRequested);
     on<GoogleSignInRequested>(_onGoogleSignInRequested);
   }
 
@@ -87,6 +91,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthAuthenticated(result.data!));
     } else {
       emit(AuthError(result.error?.error?.toString() ?? 'Profile update failed'));
+    }
+  }
+
+  Future<void> _onChangePasswordRequested(
+      ChangePasswordRequested event, Emitter<AuthState> emit) async {
+    final currentUser =
+        state is AuthAuthenticated ? (state as AuthAuthenticated).user : null;
+    emit(const AuthLoading());
+    final result = await _useCases.changePassword.call(
+      currentPassword: event.currentPassword,
+      newPassword: event.newPassword,
+    );
+    if (result is DataSuccess) {
+      emit(const AuthPasswordChanged());
+      if (currentUser != null) emit(AuthAuthenticated(currentUser));
+    } else {
+      emit(AuthError(
+          result.error?.error?.toString() ?? 'Failed to change password.'));
     }
   }
 

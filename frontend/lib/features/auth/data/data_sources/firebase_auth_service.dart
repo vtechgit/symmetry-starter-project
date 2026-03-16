@@ -40,6 +40,19 @@ class FirebaseAuthService {
     return AuthUserModel.fromFirebaseUser(_auth.currentUser!);
   }
 
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final user = _auth.currentUser!;
+    final credential = EmailAuthProvider.credential(
+      email: user.email!,
+      password: currentPassword,
+    );
+    await user.reauthenticateWithCredential(credential);
+    await user.updatePassword(newPassword);
+  }
+
   Future<AuthUserModel> signInWithGoogle() async {
     if (kIsWeb) {
       // On web, use Firebase's built-in popup — avoids the People API 403 error
