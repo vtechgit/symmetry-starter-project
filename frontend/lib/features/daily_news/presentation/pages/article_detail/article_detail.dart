@@ -8,11 +8,11 @@ import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth
 import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_state.dart';
 import '../../../../../injection_container.dart';
 import '../../../domain/entities/article.dart';
-import '../../../domain/usecases/delete_article.dart';
-import '../../../domain/usecases/save_article.dart';
 import '../../bloc/article/bookmark/bookmark_bloc.dart';
 import '../../bloc/article/bookmark/bookmark_event.dart';
 import '../../bloc/article/bookmark/bookmark_state.dart';
+import '../../bloc/article/firestore/firestore_article_bloc.dart';
+import '../../bloc/article/firestore/firestore_article_event.dart';
 import '../../bloc/article/social/social_bloc.dart';
 import '../../bloc/article/social/social_event.dart';
 import '../../bloc/article/social/social_state.dart';
@@ -32,13 +32,20 @@ class ArticleDetailsView extends StatelessWidget {
       child: Builder(builder: _buildScaffold),
     );
     if (_isJournalistArticle) {
-      child = BlocProvider(
-        create: (_) => sl<SocialBloc>()
-          ..add(SocialLoadRequested(
-            articleId: article!.firestoreId!,
-            initialLikeCount: article!.likeCount ?? 0,
-            initialCommentCount: article!.commentCount ?? 0,
-          )),
+      child = MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (_) => sl<SocialBloc>()
+              ..add(SocialLoadRequested(
+                articleId: article!.firestoreId!,
+                initialLikeCount: article!.likeCount ?? 0,
+                initialCommentCount: article!.commentCount ?? 0,
+              )),
+          ),
+          BlocProvider(
+            create: (_) => sl<FirestoreArticlesBloc>(),
+          ),
+        ],
         child: child,
       );
     }
@@ -317,17 +324,11 @@ class ArticleDetailsView extends StatelessWidget {
   }
 
   void _onBookmarkTapped(BuildContext context, bool isSaved) {
-    requireAuth(context, () async {
+    requireAuth(context, () {
       if (isSaved) {
         context.read<BookmarkBloc>().add(RemoveBookmark(article!));
       } else {
-        await sl<SaveArticleUseCase>()(params: article!);
-        context.read<BookmarkBloc>().add(const GetBookmarks());
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Article saved')),
-          );
-        }
+        context.read<BookmarkBloc>().add(SaveBookmark(article!));
       }
     });
   }
@@ -344,9 +345,11 @@ class ArticleDetailsView extends StatelessWidget {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () async {
+            onPressed: () {
               Navigator.pop(dialogContext);
-              await sl<DeleteArticleUseCase>().call(params: article!.firestoreId!);
+              context.read<FirestoreArticlesBloc>().add(
+                DeleteFirestoreArticle(article!.firestoreId!),
+              );
               if (context.mounted) Navigator.pop(context);
             },
             child: const Text('Unpublish', style: TextStyle(color: Colors.red)),
