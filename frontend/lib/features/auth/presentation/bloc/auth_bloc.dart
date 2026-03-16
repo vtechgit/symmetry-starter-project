@@ -1,11 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:news_app_clean_architecture/core/resources/data_state.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/entities/auth_user_entity.dart';
+import 'package:news_app_clean_architecture/features/auth/domain/usecases/change_password_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/register_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_in_usecase.dart';
+import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_in_with_google_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/update_profile_usecase.dart';
-import 'package:news_app_clean_architecture/features/auth/domain/usecases/change_password_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/watch_auth_state_usecase.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
@@ -17,6 +18,7 @@ class AuthUseCases {
   final RegisterUseCase register;
   final UpdateProfileUseCase updateProfile;
   final ChangePasswordUseCase changePassword;
+  final SignInWithGoogleUseCase signInWithGoogle;
 
   const AuthUseCases({
     required this.watchAuthState,
@@ -25,6 +27,7 @@ class AuthUseCases {
     required this.register,
     required this.updateProfile,
     required this.changePassword,
+    required this.signInWithGoogle,
   });
 }
 
@@ -38,6 +41,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<RegisterRequested>(_onRegisterRequested);
     on<ProfileUpdateRequested>(_onProfileUpdateRequested);
     on<ChangePasswordRequested>(_onChangePasswordRequested);
+    on<GoogleSignInRequested>(_onGoogleSignInRequested);
   }
 
   Future<void> _onAuthStarted(AuthStarted event, Emitter<AuthState> emit) async {
@@ -105,6 +109,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } else {
       emit(AuthError(
           result.error?.error?.toString() ?? 'Failed to change password.'));
+    }
+  }
+
+  Future<void> _onGoogleSignInRequested(
+      GoogleSignInRequested event, Emitter<AuthState> emit) async {
+    emit(const AuthLoading());
+    final result = await _useCases.signInWithGoogle.call();
+    if (result is DataSuccess<AuthUserEntity>) {
+      emit(AuthAuthenticated(result.data!));
+    } else {
+      emit(AuthError(result.error?.error?.toString() ?? 'Google sign-in failed'));
     }
   }
 }

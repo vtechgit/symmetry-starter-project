@@ -99,6 +99,29 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
+  @override
+  Future<DataState<AuthUserEntity>> signInWithGoogle() async {
+    try {
+      final user = await _service.signInWithGoogle();
+      return DataSuccess(user);
+    } on FirebaseAuthException catch (e) {
+      return DataFailed(DioError(
+        error: _googleErrorMessage(e.code),
+        type: DioErrorType.other,
+        requestOptions: RequestOptions(path: ''),
+      ));
+    } catch (e) {
+      final msg = e.toString().contains('cancelled')
+          ? 'Google sign-in was cancelled.'
+          : 'Google sign-in failed. Please try again.';
+      return DataFailed(DioError(
+        error: msg,
+        type: DioErrorType.other,
+        requestOptions: RequestOptions(path: ''),
+      ));
+    }
+  }
+
   String _changePasswordMessage(String code) {
     switch (code) {
       case 'wrong-password':
@@ -110,6 +133,17 @@ class AuthRepositoryImpl implements AuthRepository {
         return 'Please sign in again to change your password.';
       default:
         return 'Failed to change password. Please try again.';
+    }
+  }
+
+  String _googleErrorMessage(String code) {
+    switch (code) {
+      case 'account-exists-with-different-credential':
+        return 'An account already exists with a different sign-in method.';
+      case 'user-disabled':
+        return 'This account has been disabled.';
+      default:
+        return 'Google sign-in failed. Please try again.';
     }
   }
 

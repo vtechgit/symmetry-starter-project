@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ionicons/ionicons.dart';
 import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_event.dart';
 import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_state.dart';
@@ -121,6 +122,23 @@ class _RegisterPageState extends State<RegisterPage> {
                           : const Text('Create Account'),
                     ),
                     const SizedBox(height: 16),
+                    _OrDivider(),
+                    const SizedBox(height: 16),
+                    OutlinedButton.icon(
+                      onPressed: isLoading
+                          ? null
+                          : () => context
+                              .read<AuthBloc>()
+                              .add(const GoogleSignInRequested()),
+                      icon: const _GoogleIcon(),
+                      label: const Text('Continue with Google'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     TextButton(
                       onPressed: () => Navigator.pushReplacementNamed(context, '/Login'),
                       child: const Text('Already have an account? Sign in'),
@@ -133,5 +151,29 @@ class _RegisterPageState extends State<RegisterPage> {
         ),
       ),
     );
+  }
+}
+
+class _OrDivider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).dividerColor;
+    return Row(children: [
+      Expanded(child: Divider(color: color)),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Text('or', style: TextStyle(color: color)),
+      ),
+      Expanded(child: Divider(color: color)),
+    ]);
+  }
+}
+
+class _GoogleIcon extends StatelessWidget {
+  const _GoogleIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Icon(Ionicons.logo_google, size: 20);
   }
 }

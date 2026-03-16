@@ -1,4 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:news_app_clean_architecture/features/auth/data/models/auth_user_model.dart';
 
 class FirebaseAuthService {
@@ -49,5 +51,24 @@ class FirebaseAuthService {
     );
     await user.reauthenticateWithCredential(credential);
     await user.updatePassword(newPassword);
+  }
+
+  Future<AuthUserModel> signInWithGoogle() async {
+    if (kIsWeb) {
+      // On web, use Firebase's built-in popup — avoids the People API 403 error
+      // that the google_sign_in package triggers on web.
+      final userCredential = await _auth.signInWithPopup(GoogleAuthProvider());
+      return AuthUserModel.fromFirebaseUser(userCredential.user!);
+    }
+    // Mobile flow via google_sign_in package
+    final googleUser = await GoogleSignIn().signIn();
+    if (googleUser == null) throw Exception('Google sign-in cancelled.');
+    final googleAuth = await googleUser.authentication;
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+    final userCredential = await _auth.signInWithCredential(credential);
+    return AuthUserModel.fromFirebaseUser(userCredential.user!);
   }
 }

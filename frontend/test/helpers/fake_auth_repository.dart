@@ -74,4 +74,12 @@ class FakeAuthRepository implements AuthRepository {
     return const DataSuccess(null);
   }
 
+  @override
+  Future<DataState<AuthUserEntity>> signInWithGoogle() async {
+    if (failNextCall) {
+      failNextCall = false;
+      return DataFailed(_fakeError('account-exists-with-different-credential'));
+    }
+    return const DataSuccess(_fakeUser);
+  }
 }

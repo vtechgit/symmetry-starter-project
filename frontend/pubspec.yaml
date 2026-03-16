@@ -45,6 +45,9 @@ dependencies:
   # File picker (web + native)
   file_picker: ^6.1.1
 
+  # Google Sign-In
+  google_sign_in: ^6.2.1
+
   # Share via Web Share API
   share_plus: ^7.2.0
 

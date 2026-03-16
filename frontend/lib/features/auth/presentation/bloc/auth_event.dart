@@ -57,3 +57,7 @@ class ChangePasswordRequested extends AuthEvent {
   @override
   List<Object?> get props => [currentPassword, newPassword];
 }
+
+class GoogleSignInRequested extends AuthEvent {
+  const GoogleSignInRequested();
+}
