@@ -60,4 +60,13 @@ class FakeAuthRepository implements AuthRepository {
       Uint8List bytes, String uid, String fileName) async {
     return const DataSuccess('https://fake-photo-url.example.com/avatar.jpg');
   }
+
+  @override
+  Future<DataState<AuthUserEntity>> signInWithGoogle() async {
+    if (failNextCall) {
+      failNextCall = false;
+      return DataFailed(_fakeError('account-exists-with-different-credential'));
+    }
+    return const DataSuccess(_fakeUser);
+  }
 }

@@ -44,3 +44,7 @@ class ProfileUpdateRequested extends AuthEvent {
   @override
   List<Object?> get props => [displayName, photoURL];
 }
+
+class GoogleSignInRequested extends AuthEvent {
+  const GoogleSignInRequested();
+}

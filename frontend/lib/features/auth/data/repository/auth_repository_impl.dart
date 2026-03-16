@@ -79,6 +79,40 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
+  @override
+  Future<DataState<AuthUserEntity>> signInWithGoogle() async {
+    try {
+      final user = await _service.signInWithGoogle();
+      return DataSuccess(user);
+    } on FirebaseAuthException catch (e) {
+      return DataFailed(DioError(
+        error: _googleErrorMessage(e.code),
+        type: DioErrorType.other,
+        requestOptions: RequestOptions(path: ''),
+      ));
+    } catch (e) {
+      final msg = e.toString().contains('cancelled')
+          ? 'Google sign-in was cancelled.'
+          : 'Google sign-in failed. Please try again.';
+      return DataFailed(DioError(
+        error: msg,
+        type: DioErrorType.other,
+        requestOptions: RequestOptions(path: ''),
+      ));
+    }
+  }
+
+  String _googleErrorMessage(String code) {
+    switch (code) {
+      case 'account-exists-with-different-credential':
+        return 'An account already exists with a different sign-in method.';
+      case 'user-disabled':
+        return 'This account has been disabled.';
+      default:
+        return 'Google sign-in failed. Please try again.';
+    }
+  }
+
   String _friendlyMessage(String code) {
     switch (code) {
       case 'user-not-found':

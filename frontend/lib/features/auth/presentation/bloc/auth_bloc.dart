@@ -5,6 +5,7 @@ import 'package:news_app_clean_architecture/features/auth/domain/usecases/regist
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_in_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/update_profile_usecase.dart';
+import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_in_with_google_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/watch_auth_state_usecase.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
@@ -15,6 +16,7 @@ class AuthUseCases {
   final SignInUseCase signIn;
   final RegisterUseCase register;
   final UpdateProfileUseCase updateProfile;
+  final SignInWithGoogleUseCase signInWithGoogle;
 
   const AuthUseCases({
     required this.watchAuthState,
@@ -22,6 +24,7 @@ class AuthUseCases {
     required this.signIn,
     required this.register,
     required this.updateProfile,
+    required this.signInWithGoogle,
   });
 }
 
@@ -34,6 +37,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<SignInRequested>(_onSignInRequested);
     on<RegisterRequested>(_onRegisterRequested);
     on<ProfileUpdateRequested>(_onProfileUpdateRequested);
+    on<GoogleSignInRequested>(_onGoogleSignInRequested);
   }
 
   Future<void> _onAuthStarted(AuthStarted event, Emitter<AuthState> emit) async {
@@ -83,6 +87,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthAuthenticated(result.data!));
     } else {
       emit(AuthError(result.error?.error?.toString() ?? 'Profile update failed'));
+    }
+  }
+
+  Future<void> _onGoogleSignInRequested(
+      GoogleSignInRequested event, Emitter<AuthState> emit) async {
+    emit(const AuthLoading());
+    final result = await _useCases.signInWithGoogle.call();
+    if (result is DataSuccess<AuthUserEntity>) {
+      emit(AuthAuthenticated(result.data!));
+    } else {
+      emit(AuthError(result.error?.error?.toString() ?? 'Google sign-in failed'));
     }
   }
 }

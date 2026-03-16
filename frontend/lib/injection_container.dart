@@ -10,6 +10,7 @@ import 'package:news_app_clean_architecture/features/auth/data/repository/auth_r
 import 'package:news_app_clean_architecture/features/auth/domain/repository/auth_repository.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/register_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_in_usecase.dart';
+import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_in_with_google_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/update_profile_usecase.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/upload_profile_photo_usecase.dart';
@@ -134,12 +135,14 @@ Future<void> initializeDependencies() async {
   sl.registerSingleton<RegisterUseCase>(RegisterUseCase(sl()));
   sl.registerSingleton<UpdateProfileUseCase>(UpdateProfileUseCase(sl()));
   sl.registerSingleton<UploadProfilePhotoUseCase>(UploadProfilePhotoUseCase(sl()));
+  sl.registerSingleton<SignInWithGoogleUseCase>(SignInWithGoogleUseCase(sl()));
   sl.registerSingleton<AuthUseCases>(AuthUseCases(
     watchAuthState: sl(),
     signOut: sl(),
     signIn: sl(),
     register: sl(),
     updateProfile: sl(),
+    signInWithGoogle: sl(),
   ));
 
   // AI article — providers, repository, usecase, bloc
