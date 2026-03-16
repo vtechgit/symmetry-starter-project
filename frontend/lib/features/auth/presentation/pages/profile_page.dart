@@ -81,7 +81,10 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             body: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
-              child: Column(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const SizedBox(height: 16),
@@ -97,7 +100,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 ],
               ),
             ),
-          );
+          ),
+        ),
+      );
         },
       ),
     );

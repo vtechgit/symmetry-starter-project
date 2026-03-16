@@ -57,14 +57,19 @@ class _RegisterPageState extends State<RegisterPage> {
             final isLoading = state is AuthLoading;
             return SingleChildScrollView(
               padding: const EdgeInsets.all(24),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 32),
-                    Text(
-                      'Join the conversation',
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 16),
+                        Image.asset('assets/sn_logo.png', height: 64),
+                        const SizedBox(height: 24),
+                        Text(
+                          'Join the conversation',
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w800,
@@ -143,7 +148,9 @@ class _RegisterPageState extends State<RegisterPage> {
                       onPressed: () => Navigator.pushReplacementNamed(context, '/Login'),
                       child: const Text('Already have an account? Sign in'),
                     ),
-                  ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
             );

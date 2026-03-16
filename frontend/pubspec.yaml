@@ -86,6 +86,7 @@ flutter:
 
   assets:
     - assets/logo.png
+    - assets/sn_logo.png
 
   fonts:
     - family: Muli
