@@ -57,14 +57,19 @@ class _LoginPageState extends State<LoginPage> {
             final isLoading = state is AuthLoading;
             return SingleChildScrollView(
               padding: const EdgeInsets.all(24),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 32),
-                    Text(
-                      'Welcome back',
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 16),
+                        Image.asset('assets/sn_logo.png', height: 64),
+                        const SizedBox(height: 24),
+                        Text(
+                          'Welcome back',
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w800,
@@ -143,7 +148,9 @@ class _LoginPageState extends State<LoginPage> {
                       onPressed: () => Navigator.pushReplacementNamed(context, '/Register'),
                       child: const Text("Don't have an account? Sign up"),
                     ),
-                  ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
             );

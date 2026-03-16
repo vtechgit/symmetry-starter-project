@@ -134,9 +134,12 @@ class _PublishArticlePageState extends State<PublishArticlePage> {
     final dividerColor = Theme.of(context).dividerColor;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
-      child: Form(
-        key: _formKey,
-        child: Column(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: Form(
+            key: _formKey,
+            child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildAiButton(context),
@@ -200,6 +203,8 @@ class _PublishArticlePageState extends State<PublishArticlePage> {
           ],
         ),
       ),
+    ),
+  ),
     );
   }
 
