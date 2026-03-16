@@ -19,6 +19,7 @@ DioError _fakeError(String msg) => DioError(
 
 class FakeAuthRepository implements AuthRepository {
   bool failNextCall = false;
+  bool failChangePassword = false;
 
   @override
   Future<DataState<AuthUserEntity>> signIn(String email, String password) async {
@@ -60,4 +61,17 @@ class FakeAuthRepository implements AuthRepository {
       Uint8List bytes, String uid, String fileName) async {
     return const DataSuccess('https://fake-photo-url.example.com/avatar.jpg');
   }
+
+  @override
+  Future<DataState<void>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    if (failChangePassword) {
+      failChangePassword = false;
+      return DataFailed(_fakeError('wrong-password'));
+    }
+    return const DataSuccess(null);
+  }
+
 }

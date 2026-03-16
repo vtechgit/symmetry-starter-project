@@ -79,6 +79,40 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
+  @override
+  Future<DataState<void>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      await _service.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+      return const DataSuccess(null);
+    } on FirebaseAuthException catch (e) {
+      return DataFailed(DioError(
+        error: _changePasswordMessage(e.code),
+        type: DioErrorType.other,
+        requestOptions: RequestOptions(path: ''),
+      ));
+    }
+  }
+
+  String _changePasswordMessage(String code) {
+    switch (code) {
+      case 'wrong-password':
+      case 'invalid-credential':
+        return 'Current password is incorrect.';
+      case 'weak-password':
+        return 'New password must be at least 6 characters.';
+      case 'requires-recent-login':
+        return 'Please sign in again to change your password.';
+      default:
+        return 'Failed to change password. Please try again.';
+    }
+  }
+
   String _friendlyMessage(String code) {
     switch (code) {
       case 'user-not-found':
