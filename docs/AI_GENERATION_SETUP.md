@@ -43,13 +43,30 @@ To fix this:
 
 The key is never hardcoded — it is injected via `--dart-define`:
 
+#### Terminal / CLI
+
 ```bash
-# Development
+# Web (Chrome)
 flutter run -d chrome --dart-define=OPENROUTER_API_KEY=sk-or-your-key-here
+
+# Android emulator or device
+flutter run -d emulator-5554 --dart-define=OPENROUTER_API_KEY=sk-or-your-key-here
 
 # Production build
 flutter build web --dart-define=OPENROUTER_API_KEY=sk-or-your-key-here
 ```
+
+To find your device/emulator ID, run `flutter devices` first.
+
+#### Android Studio (no terminal)
+
+1. **Run → Edit Configurations...**
+2. Select your Flutter configuration (usually `main.dart`).
+3. In the **Additional run args** field, add:
+   ```
+   --dart-define=OPENROUTER_API_KEY=sk-or-your-key-here
+   ```
+4. Click **OK** and run normally with the play button.
 
 > **Why `--dart-define`?** It keeps secrets out of source control. The constant is resolved at compile time and is never written to any file in the repo.
 
