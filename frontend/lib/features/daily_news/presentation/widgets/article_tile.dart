@@ -208,6 +208,7 @@ class ArticleWidget extends StatelessWidget {
           width: double.infinity,
           height: 180,
           placeholder: Container(
+            width: double.infinity,
             height: 180,
             color: dividerColor,
             child: Center(
@@ -218,9 +219,12 @@ class ArticleWidget extends StatelessWidget {
             ),
           ),
           errorWidget: Container(
+            width: double.infinity,
             height: 180,
             color: dividerColor,
-            child: Icon(Icons.broken_image_outlined, color: secondaryColor, size: 32),
+            child: Center(
+              child: Icon(Icons.broken_image_outlined, color: secondaryColor, size: 32),
+            ),
           ),
         ),
       ),
